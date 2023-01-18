@@ -1,0 +1,12 @@
+- id: '1672498458946'
+  name: Dehumidify
+  entities:
+    switch.kid_room_dehumidify:
+      device_class: outlet
+      icon: mdi:air-filter
+      friendly_name: Kid Room - Dehumidify
+      state: 'on'
+  icon: mdi:air-filter
+  metadata:
+    switch.kid_room_dehumidify:
+      entity_only: true
