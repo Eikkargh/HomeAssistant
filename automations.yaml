@@ -1,0 +1,89 @@
+- id: '1672512021653'
+  alias: Kid Room - Auto Dehumidify On
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.kid_room_humidity
+    above: '60'
+  condition: []
+  action:
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.kid_room_dehumidify
+  mode: single
+- id: '1672512548497'
+  alias: Kid Room - Auto Dehumidify Off
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.kid_room_humidity
+    below: '50'
+  condition: []
+  action:
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.kid_room_dehumidify
+  mode: single
+- id: '1672512996986'
+  alias: Living Room - Scene TV On
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.tv_power
+    from: '''off'''
+    to: '''on'''
+  condition: []
+  action:
+  - service: rest_command.switchbot_ir_scenes
+    data:
+      sceneId: T01-202112251104-39920881
+  mode: single
+- id: '1672523129211'
+  alias: Living Room - TV On
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.tv_power
+    from: '''off'''
+    to: '''on'''
+  condition: []
+  action:
+  - service: rest_command.switchbot_ir_devices
+    data:
+      deviceId: 01-202112251039-02611139
+      command: turnOn
+      commandType: command
+  mode: single
+- id: '1672876679471'
+  alias: Kid Room - Auto Heater On
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.kid_room_sensor
+    below: '15'
+    attribute: temperature
+  condition: []
+  action:
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.kid_room_heater
+  mode: single
+- id: '1672876799845'
+  alias: Kid Room - Auto Heater Off
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.kid_room_temp
+    above: '17'
+  condition: []
+  action:
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.kid_room_heater
+  mode: single
