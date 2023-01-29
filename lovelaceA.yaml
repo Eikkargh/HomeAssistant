@@ -1,0 +1,357 @@
+title: Home
+views:
+  - path: default_view
+    title: Home
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: custom:mod-card
+            style:
+              hui-vertical-stack-card$: |
+                hui-entities-card {
+                  margin-bottom: 0px !important;
+                }
+                hui-glance-card {
+                  margin-top: 0px !important;
+                  margin: 0 150px 0 150px !important;
+                }    
+            card:
+              type: vertical-stack
+              cards:
+                - type: entities
+                  entities:
+                    - entity: light.lumiman_smart_bulb
+                    - entity: light.kid_strip_light
+                    - entity: light.kid_room_lava_lamp
+                    - entity: switch.kid_room_socket_4
+                    - entity: switch.kid_room_dehumidify
+                    - entity: switch.kid_room_heater
+                  state_color: true
+                  title: Kid Room
+                  style: |
+                    ha-card {
+                      border-radius: 30px;
+                - show_name: false
+                  show_icon: true
+                  show_state: true
+                  type: glance
+                  style: |
+                    .entities {
+                      padding-top: 0px !important;
+                    }
+                    ha-card {
+                      border-radius: 50px;
+                    }
+                  entities:
+                    - entity: sensor.kid_room_temp
+                      style: |
+                        :host { --paper-item-icon-color: {{  '#FF3333'  if
+                          states('sensor.kid_room_temp') | float > 20 else '#CC6600' if
+                          states('sensor.kid_room_temp') | float > 15 else '#0000CC' }};
+                        }
+                    - entity: sensor.kid_room_humidity
+                      style: |
+                        :host { --paper-item-icon-color: {{  '#00FFFF'  if
+                          states('sensor.kid_room_humidity') | float > 60 else '#00FF00' if
+                          states('sensor.kid_room_humidity') | float > 30 else '#CCCC00' }}; 
+                        }
+          - type: entities
+            entities:
+              - entity: light.back_door_light
+              - entity: light.hall_light
+              - entity: sensor.dining_motion_dectected
+                style: |
+                  :host { 
+                  --paper-item-icon-color: {{ 
+                    '#A12A23' if is_state('sensor.dining_motion_detected', 'True') else 
+                    '#4287F5'}}; 
+                  }
+              - entity: sensor.dining_motion_brightness
+                style: |
+                  :host { 
+                  --paper-item-icon-color: {{ 
+                    '#4287f5' if is_state('sensor.dining_motion_brightness', 'dim') else 
+                    '#D9A338'}}; 
+                  }
+              - entity: humidifier.aromatherapy_machine
+              - entity: light.aromatherapy_machine
+              - entity: select.aromatherapy_machine_moodlighting
+            title: Kitchen/Dinning Room
+            state_color: true
+            style: |
+              ha-card {
+                border-radius: 30px;
+              }
+      - type: vertical-stack
+        cards:
+          - type: custom:clock-weather-card
+            entity: weather.home
+            sun_entity: sun.sun
+            weather_icon_type: line
+            animated_icon: true
+            forecast_days: 5
+            locale: en
+            time_format: 24
+            date_pattern: PPP
+            scale: 80
+            style: |
+              ha-card {
+                border-radius: 15px;
+              }
+              .card-content {
+                padding: 0 10px 16px 10px !important;
+              }
+          - type: conditional
+            conditions:
+              - entity: sensor.washer_dryer_wifi
+                state: 'On'
+            card:
+              type: entities
+              entities:
+                - entity: sensor.washer_dryer_status
+                  name: Status
+                - entity: sensor.washer_dryer_program
+                  name: Program
+                - entity: sensor.washer_dryer_phase
+                  name: Phase
+                - entity: sensor.washer_dryer_wash_temp
+                  name: Wash Temp
+                - entity: sensor.washer_dryer_spin_speed
+                  name: Spin Speed
+                - entity: sensor.washer_dryer_dry_time
+                  name: Dry Setting
+                - entity: sensor.washer_dryer_wash_time
+                  name: Cycle Time
+                - entity: sensor.washer_dryer_delay_time
+                  name: Delay Time
+                - entity: sensor.washer_dryer_error
+                  name: Error
+              title: Washer Dryer
+              style: |
+                ha-card {
+                  border-radius: 30px;
+                }
+                :host {
+                  padding-top: 0;
+                }
+          - type: custom:config-template-card
+            variables:
+              - states['sensor.washer_dryer_max_time'].state
+              - states['sensor.washer_dryer_delay_time'].state
+              - states['sensor.washer_dryer_wash_time'].state
+              - states['sensor.washer_dryer_dry_time'].state
+            entities:
+              - sensor.washer_dryer_max_time
+              - sensor.washer_dryer_total_time
+              - sensor.washer_dryer_delay_time
+              - sensor.washer_dryer_wash_time
+              - sensor.washer_dryer_dry_time
+            card:
+              type: custom:bar-card
+              entities:
+                - entity: sensor.washer_dryer_total_time
+                  name: |-
+                    "${vars[1] > 0 ? 'Washer/Dryer - Delayed'
+                     : vars[2] > 0 ? 'Washer/Dryer - Washing' 
+                     : vars[3] > 0 ? 'Washer/Dryer - Drying' 
+                     : 'Washer/Dryer - Finished';}"
+                  unit_of_measurement: mins
+                  min: '0'
+                  max: ${+vars[0]}
+                  icon: mdi:washing-machine
+                  positions:
+                    indicator: 'off'
+              style: |
+                ha-card {
+                  border-radius: 15px;
+                }
+                bar-card-backgroundbar {
+                  --bar-color: #000000 !important;
+                }
+                bar-card-currentbar {
+                  --bar-color: {{ 
+                    '#7634c7' if (states('sensor.washer_dryer_delay_time') > 0) else
+                    '#34acc7' if (states('sensor.washer_dryer_wash_time') > 0) else
+                    '#c77634' if (states('sensor.washer_dryer_dry_time') > 0) else
+                    '#a32e2e' }} !important;
+                }
+      - type: vertical-stack
+        cards:
+          - type: entities
+            entities:
+              - entity: light.bedroom_light
+              - entity: light.bedroom_fairy_lights
+              - entity: light.bedroom_strip_light
+              - entity: fan.bedroom_fan
+            title: Bedroom
+            style: |
+              ha-card {
+                border-radius: 30px;
+              }
+          - type: custom:mod-card
+            style:
+              hui-vertical-stack-card$: |
+                hui-entities-card {
+                  margin-bottom: 0px !important;
+                }
+            card:
+              type: vertical-stack
+              cards:
+                - type: entities
+                  entities:
+                    - entity: light.living_room_book_lamp
+                    - entity: light.living_room_side_light
+                    - entity: light.desk_lamp
+                    - entity: climate.fan_heater
+                      style: |
+                        :host {
+                          --paper-item-icon-color: {{ '#FF0000' if
+                            is_state('climate.fan_heater', 'heat') else  
+                            '#337FFF'}};
+                        }
+                  title: Living Room
+                  state_color: true
+                  style: |
+                    ha-card {
+                      border-radius: 30px;
+                    }
+                - show_name: false
+                  show_icon: true
+                  type: button
+                  style: |
+                    ha-card {
+                      --paper-item-icon-color: {{ '#FF0000' if
+                        is_state('climate.fan_heater', 'heat') else  
+                        '#337FFF'}}; 
+                      margin: 1px 195px 0px 195px !important;
+                      border-radius: 100px;
+                      border-style: solid;
+                      border-color: {{ '#FF0000' if
+                        is_state('climate.fan_heater', 'heat') else  
+                        '#337FFF'}}; 
+                    }
+                  tap_action:
+                    action: toggle
+                  entity: climate.fan_heater
+                  show_state: false
+                  name: Fan Heater Switch
+                  icon_height: 50px
+          - square: false
+            columns: 2
+            type: grid
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: call-service
+                  service: mqtt.publish
+                  data:
+                    topic: waterer/waterpump
+                    payload: Requested
+                  target: {}
+                double_tap_action:
+                  action: call-service
+                  service: mqtt.publish
+                  data:
+                    topic: waterer/waterpump
+                    payload: Cancelled
+                  target: {}
+                hold_action:
+                  action: call-service
+                  service: mqtt.publish
+                  data:
+                    topic: waterer/restart
+                    payload: Reboot
+                  target: {}
+                entity: button.water_pump
+                icon: mdi:water-pump
+                icon_height: 40px
+                style: |
+                  :host { 
+                    --state-unavailable-color: {{
+                      '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                      '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                      '#0000FF' }} !important; 
+                    --paper-item-icon-color: {{  '#00FF00'  if
+                      is_state('sensor.waterer_status', 'Moist')  else  '#FF0000' if
+                      is_state('sensor.waterer_status', 'Dry') else '#0000FF' }}; 
+                  }
+                  ha-card {
+                  margin: 0px 40px 0px 40px;
+                  border-radius: 100px;
+                  border-style: solid;
+                  border-color: {{  '#00FF00'  if
+                  is_state('sensor.waterer_status', 'Moist')  else  '#FF0000' if
+                  is_state('sensor.waterer_status', 'Dry') else '#0000FF' }}; 
+                  }
+              - type: entities
+                entities:
+                  - entity: sensor.waterer_status
+                    name: Soil State
+                    icon: mdi:sprout
+                    style: |
+                      :host { 
+                      --paper-item-icon-color: {{ 
+                        '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                        '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                        '#0000FF' }}; 
+                      }
+                  - entity: sensor.waterer_moisture
+                    name: Moisture
+                    icon: mdi:water
+                    style: |
+                      :host { 
+                      --paper-item-icon-color: {{ 
+                        '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                        '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                        '#0000FF' }}; 
+                      }
+                  - entity: sensor.waterer_pump
+                    name: Pump
+                    icon: mdi:water-pump
+                    style: |
+                      :host { 
+                        --paper-item-icon-color: {{ 
+                        '#FFFF00' if is_state('sensor.waterer_pump', 'Requested') else 
+                        '#CC6600' if is_state('sensor.waterer_pump', 'Cancelled') else 
+                        '#00FFFF' if is_state('sensor.waterer_pump', 'Low Water') else 
+                        '#00FF00' }}; 
+                        }
+                state_color: true
+                style: |
+                  ha-card {
+                    margin: 0 10px 0 0;
+                    border-radius: 15px;
+                    }
+  - theme: Backend-selected
+    title: Cameras
+    path: camera
+    badges: []
+    cards:
+      - show_state: false
+        show_name: true
+        camera_view: auto
+        type: picture-entity
+        entity: camera.back_porch
+        tap_action:
+          action: call-service
+          service: light.toggle
+          data: {}
+          target:
+            entity_id: light.back_door_light
+        camera_image: camera.back_porch
+        hold_action:
+          action: more-info
+      - show_state: false
+        show_name: true
+        camera_view: auto
+        type: picture-entity
+        entity: camera.pi_camera
+        camera_image: camera.pi_camera
+        tap_action:
+          action: call-service
+          service: light.toggle
+          data: {}
+          target:
+            entity_id: light.living_room_side_light
