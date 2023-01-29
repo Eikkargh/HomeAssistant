@@ -1,0 +1,389 @@
+views:
+  - theme: Backend-selected
+    title: Home
+    icon: mdi:home
+    badges: []
+    cards:
+      - type: entities
+        entities:
+          - entity: light.bedroom_light
+          - entity: light.bedroom_fairy_lights
+          - entity: light.bedroom_strip_light
+          - entity: light.lumiman_smart_bulb
+          - entity: light.kid_strip_light
+          - entity: light.kid_room_lava_lamp
+          - entity: switch.kid_room_socket_4
+          - entity: light.hall_light
+          - entity: light.back_door_light
+          - entity: light.living_room_side_light
+          - entity: light.living_room_book_lamp
+          - entity: light.desk_lamp
+          - entity: light.aromatherapy_machine
+        title: Lights
+        state_color: true
+        style: |
+          ha-card {
+            border-radius: 30px;
+            margin: 6px;
+            --ha-card-header-font-size: 18px;
+          }
+          .card-header {
+            padding: 0px 16px 0px;
+          }
+          .card-content {
+            padding: 0px 16px 0px;
+          }
+          #states > * {
+            margin: 0 !important;
+          }
+      - type: vertical-stack
+        cards:
+          - type: weather-forecast
+            entity: weather.home
+            style: |
+              ha-card {
+                border-radius: 50px;
+              }
+              .state {
+                font-size: 20px !important;
+              }
+          - show_name: false
+            show_icon: false
+            show_state: true
+            type: glance
+            entities:
+              - entity: sensor.time
+            card_mod:
+              style: |
+                ha-card {
+                  line-height: 100px;
+                  font-size: 100px;
+                  border-radius: 100px;
+                  border-style: solid;
+                  border-color: white;
+                  }
+                .entities.no-header {
+                  padding-top: 12 !important;
+                }
+          - show_name: false
+            show_icon: false
+            show_state: true
+            type: glance
+            card_mod:
+              style: |
+                ha-card {
+                  line-height: 24px;
+                  font-size: 24px;
+                  border-radius: 50px;
+                  border-style: solid;
+                  margin: 0 30px 0 30px;
+                  }
+            entities:
+              - sensor.date_long
+          - show_name: false
+            show_icon: true
+            show_state: true
+            type: glance
+            style: |
+              ha-card {
+                border-radius: 50px;
+              }
+              div.entities.no-header {
+                padding: 0 0 0 0 !important;
+              }
+            entities:
+              - entity: sensor.kid_room_temp
+                style: |
+                  :host {
+                    --card-mod-icon-color: {{  '#FF3333'  if
+                    states('sensor.kid_room_temp') | float > 20 else '#CC6600' if
+                    states('sensor.kid_room_temp') | float > 15 else '#0000CC' }}; 
+                  }
+              - entity: sensor.kid_room_humidity
+                style: |
+                  :host {
+                    --card-mod-icon-color: {{  '#00FFFF'  if
+                    states('sensor.kid_room_humidity') | float > 60 else '#00FF00' if
+                    states('sensor.kid_room_humidity') | float > 15 else '#CCCC00' }};
+                    padding: 0 16px 0;
+                    margin: 0;
+                  }
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: Devices
+            entities:
+              - entity: scene.lights_white
+              - entity: fan.bedroom_fan
+              - entity: switch.kid_room_dehumidify
+              - entity: switch.kid_room_heater
+              - entity: climate.fan_heater
+            state_color: true
+            show_header_toggle: false
+            style: |
+              ha-card {
+                border-radius: 30px;
+                --ha-card-header-font-size: 18px;
+              }
+              .card-header {
+                padding: 0px 16px 0px;
+              }
+              #states > * {
+                margin: 0px 0px !important;
+              }
+          - type: entities
+            entities:
+              - entity: sensor.waterer_status
+                name: Soil State
+                icon: mdi:sprout
+                style: |
+                  :host { 
+                    --paper-item-icon-color: {{ 
+                      '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                      '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                      '#0000FF' }}; 
+                  }
+              - entity: sensor.waterer_moisture
+                name: Moisture
+                icon: mdi:water
+                style: |
+                  :host { 
+                    --paper-item-icon-color: {{ 
+                      '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                      '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                      '#0000FF' }}; 
+                  }
+              - entity: sensor.waterer_pump
+                name: Pump
+                icon: mdi:water-pump
+                style: |
+                  :host { 
+                    --paper-item-icon-color: {{ 
+                      '#FFFF00' if is_state('sensor.waterer_pump', 'Requested') else 
+                      '#CC6600' if is_state('sensor.waterer_pump', 'Cancelled') else 
+                      '#00FFFF' if is_state('sensor.waterer_pump', 'Low Water') else 
+                      '#00FF00' }}; 
+                    }
+                  {
+                    margin: 0;
+                  }
+            state_color: true
+            style: |
+              ha-card {
+                border-radius: 30px;
+              }
+              #states > * {
+                margin: 0 !important;
+              } 
+              .card-content {
+                padding: 4px 16px 4px 16px !important;
+              }
+          - show_name: true
+            show_icon: true
+            icon: mdi:water-pump
+            icon_height: 20px
+            entity: button.water_pump
+            name: Water Plant
+            show_state: false
+            type: button
+            tap_action:
+              action: call-service
+              service: mqtt.publish
+              data:
+                topic: waterer/waterpump
+                payload: Requested
+              target: {}
+            double_tap_action:
+              action: call-service
+              service: mqtt.publish
+              data:
+                topic: waterer/waterpump
+                payload: Cancelled
+              target: {}
+            hold_action:
+              action: call-service
+              service: mqtt.publish
+              data:
+                topic: waterer/restart
+                payload: Reboot
+              target: {}
+            style: |
+              :host {
+                --state-unavailable-color: {{
+                  '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                  '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                  '#0000FF' }} !important; 
+                --paper-item-icon-color: {{ 
+                  '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                  '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                  '#0000FF' }} !important; 
+              }
+              ha-card {
+                margin: 0px 85px 0 85px;
+                line-height: 4px;
+                font-size: 14px !important;
+                padding: 2% 0 !important;
+                border-radius: 100px;
+                border-style: solid;
+                border-color: {{
+                  '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                  '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                  '#0000FF' }};
+              }
+          - type: conditional
+            conditions:
+              - entity: sensor.washer_dryer_wifi
+                state: 'On'
+            card:
+              type: entities
+              entities:
+                - entity: sensor.washer_dryer_total_time
+                  name: Washer
+              style: |
+                ha-card {
+                  border-radius: 30px !important;
+                }
+                .card-content {
+                  padding: 4px 16px 2px 16px !important;
+                }
+                #states > * {
+                  margin: 0px !important;
+                }
+  - theme: Backend-selected
+    title: Cameras
+    path: cameras
+    icon: mdi:cctv
+    badges: []
+    cards:
+      - type: vertical-stack
+        cards:
+          - show_state: false
+            show_name: true
+            camera_view: auto
+            type: picture-entity
+            entity: camera.back_porch
+          - show_state: false
+            show_name: true
+            camera_view: auto
+            type: picture-entity
+            entity: camera.pi_camera
+  - title: Remotes
+    icon: mdi:remote-tv
+    badges: []
+    cards:
+      - type: horizontal-stack
+        cards:
+          - type: custom:firemote-card
+            entity: media_player.fire_tv_192_168_1_134
+            device_type: fire_stick_4k
+            compatibility_mode: default
+            scale: 75%
+          - title: Living Room TV
+            square: false
+            columns: 2
+            type: grid
+            cards:
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                entity: switch.living_room_tv_power
+                style: |
+                  :host {
+                    --paper-item-icon-active-color: red;
+                    --paper-item-icon-color: red;
+                    }
+                icon: mdi:power
+                hold_action:
+                  action: none
+                icon_height: 40px
+              - show_name: false
+                show_icon: true
+                type: button
+                entity: button.living_room_tv_up
+                hold_action:
+                  action: none
+                tap_action:
+                  action: call-service
+                  service: shell_command.living_room_tv_up
+                  data: {}
+                  target: {}
+                icon_height: 40px
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: call-service
+                  service: shell_command.living_room_tv_exit
+                  data: {}
+                  target: {}
+                entity: button.living_room_tv_exit
+                name: Exit
+                icon_height: 40px
+              - show_name: false
+                show_icon: true
+                type: button
+                entity: button.living_room_tv_down
+                icon: mdi:volume-minus
+                hold_action:
+                  action: none
+                tap_action:
+                  action: call-service
+                  service: shell_command.living_room_tv_down
+                  data: {}
+                  target: {}
+                icon_height: 40px
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: call-service
+                  service: shell_command.living_room_tv_input
+                  data: {}
+                  target: {}
+                entity: button.living_room_tv_input
+                name: Input
+                hold_action:
+                  action: none
+                icon_height: 40px
+              - show_name: false
+                show_icon: true
+                type: button
+                entity: button.living_room_tv_mute
+                hold_action:
+                  action: none
+                tap_action:
+                  action: call-service
+                  service: shell_command.living_room_tv_mute
+                  data: {}
+                  target: {}
+                icon_height: 40px
+  - theme: Backend-selected
+    title: Washing Machine
+    path: washing-machine
+    icon: mdi:washing-machine
+    type: panel
+    badges: []
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: entity
+            entity: sensor.washer_dryer_status
+            icon: mdi:washing-machine
+            state_color: true
+          - type: conditional
+            conditions:
+              - entity: sensor.washer_dryer_wifi
+                state: 'On'
+            card:
+              type: entities
+              entities:
+                - entity: sensor.washer_dryer_status
+                - entity: sensor.washer_dryer_program
+                - entity: sensor.washer_dryer_phase
+                - entity: sensor.washer_dryer_wash_temp
+                - entity: sensor.washer_dryer_spin_speed
+                - entity: sensor.washer_dryer_wash_time
+                - entity: sensor.washer_dryer_dry_time
+                - entity: sensor.washer_dryer_delay_time
