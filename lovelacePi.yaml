@@ -235,20 +235,48 @@ views:
               - entity: sensor.washer_dryer_wifi
                 state: 'On'
             card:
-              type: entities
+              type: custom:config-template-card
+              variables:
+                - states['sensor.washer_dryer_max_time'].state
+                - states['sensor.washer_dryer_delay_time'].state
+                - states['sensor.washer_dryer_wash_time'].state
+                - states['sensor.washer_dryer_dry_time'].state
               entities:
-                - entity: sensor.washer_dryer_total_time
-                  name: Washer
-              style: |
-                ha-card {
-                  border-radius: 30px !important;
-                }
-                .card-content {
-                  padding: 4px 16px 2px 16px !important;
-                }
-                #states > * {
-                  margin: 0px !important;
-                }
+                - sensor.washer_dryer_max_time
+                - sensor.washer_dryer_total_time
+                - sensor.washer_dryer_delay_time
+                - sensor.washer_dryer_wash_time
+                - sensor.washer_dryer_dry_time
+              card:
+                type: custom:bar-card
+                entities:
+                  - entity: sensor.washer_dryer_total_time
+                    name: |-
+                      "${vars[1] > 0 ? 'Washer/Dryer - Delayed'
+                       : vars[2] > 0 ? 'Washer/Dryer - Washing' 
+                       : vars[3] > 0 ? 'Washer/Dryer - Drying' 
+                       : 'Washer/Dryer - Finished'}"
+                    unit_of_measurement: mins
+                    min: '0'
+                    max: ${+vars[0]}
+                    icon: mdi:washing-machine
+                    positions:
+                      indicator: 'off'
+                    severity:
+                      - color: |-
+                          "${vars[1] > 0 ? '#7634c7'
+                           : vars[2] > 0 ? '#34acc7'
+                           : vars[3] > 0 ? '#c77634'
+                           : '#a32e2e'}"
+                        from: 0
+                        to: 2000
+                style: |
+                  ha-card {
+                    border-radius: 15px;
+                  }
+                  bar-card-backgroundbar {
+                    --bar-color: '#000000' !important;
+                  }
   - theme: Backend-selected
     title: Cameras
     path: cameras
