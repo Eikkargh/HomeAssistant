@@ -3,8 +3,9 @@
   description: ''
   trigger:
   - platform: numeric_state
-    entity_id: sensor.kid_room_humidity
+    entity_id: sensor.kid_room_sensor
     above: '60'
+    attribute: humidity
   condition: []
   action:
   - service: switch.turn_on
@@ -17,8 +18,9 @@
   description: ''
   trigger:
   - platform: numeric_state
-    entity_id: sensor.kid_room_humidity
+    entity_id: sensor.kid_room_sensor
     below: '50'
+    attribute: humidity
   condition: []
   action:
   - service: switch.turn_off
@@ -27,38 +29,6 @@
       entity_id: switch.kid_room_dehumidify
   mode: single
 - id: '1672512996986'
-  alias: Living Room - Scene TV On
-  description: ''
-  trigger:
-  - platform: state
-    entity_id:
-    - input_boolean.tv_power
-    from: '''off'''
-    to: '''on'''
-  condition: []
-  action:
-  - service: rest_command.switchbot_ir_scenes
-    data:
-      sceneId: T01-202112251104-39920881
-  mode: single
-- id: '1672523129211'
-  alias: Living Room - TV On
-  description: ''
-  trigger:
-  - platform: state
-    entity_id:
-    - input_boolean.tv_power
-    from: '''off'''
-    to: '''on'''
-  condition: []
-  action:
-  - service: rest_command.switchbot_ir_devices
-    data:
-      deviceId: 01-202112251039-02611139
-      command: turnOn
-      commandType: command
-  mode: single
-- id: '1672876679471'
   alias: Kid Room - Auto Heater On
   description: ''
   trigger:
@@ -78,12 +48,30 @@
   description: ''
   trigger:
   - platform: numeric_state
-    entity_id: sensor.kid_room_temp
+    entity_id: sensor.kid_room_sensor
     above: '17'
+    attribute: temperature
   condition: []
   action:
   - service: switch.turn_off
     data: {}
     target:
       entity_id: switch.kid_room_heater
+  mode: single
+- id: '1674866322296'
+  alias: Alex Phone - Battery Low Notification
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.alex_phone_battery_level
+    below: '25'
+  condition:
+  - condition: state
+    entity_id: binary_sensor.alex_phone_is_charging
+    state: '''Off'''
+  action:
+  - service: notify.mobile_app_alex_phone
+    data:
+      message: Phone battery is at 25%. Get to a charger ready.
+      title: Phone Battery Low
   mode: single
