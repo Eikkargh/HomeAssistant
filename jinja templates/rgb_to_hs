@@ -1,0 +1,45 @@
+alias: RGB to HS
+sequence:
+  - service: input_text.set_value
+    target:
+      entity_id: input_text.{{inputName}}
+    data:
+      value: |-
+        {% set r_dec = (r | int)/255 %}
+        {% set g_dec = (g | int)/255 %} 
+        {% set b_dec = (b | int)/255 %}
+        {% set rgb_decimal = r_dec,g_dec,b_dec %}
+
+        {% set maxc = rgb_decimal | max %} 
+        {% set minc = rgb_decimal | min %} 
+        {% set l_dec = (maxc + minc) / 2 %} 
+        {% set l = (l_dec * 100) | int %}
+
+        {% if maxc == minc %}  
+          {% set s_dec = 0 %}
+        {% elif l_dec <= 0.5 %}
+          {% set s_dec = (maxc - minc) / (maxc + minc + 0.001) %}
+        {% else %}
+          {% set s_dec = (maxc - minc) / (2.0 - maxc - minc) %}
+        {% endif %}
+
+        {% set s = (s_dec * 100) | int %} 
+        {% if r_dec == maxc %}
+          {% set h_deg = ((g_dec - b_dec) / (maxc - minc + 0.001)) * 60 %}
+        {% elif g_dec == maxc %}
+          {% set h_deg = ((2.0 + (b_dec - r_dec)) / (maxc - minc + 0.001)) * 60 %}
+        {% else %}
+          {% set h_deg = ((4.0 + (r_dec - g_dec)) / (maxc - minc + 0.001)) * 60 %}
+        {% endif %}
+
+        {% if h_deg < 0 %}
+          {% set h = h_deg + 360 %}
+        {% elif h_deg > 360 %}
+          {% set h = h_deg - 360 %}
+        {% else %}
+          {% set h = h_deg %}
+        {% endif %}
+
+        {{ h | round(0)}},{{ s | round(0)}},{{ l | round(0) }}
+mode: single
+icon: mdi:palette
