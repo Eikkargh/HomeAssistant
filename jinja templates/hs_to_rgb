@@ -1,0 +1,61 @@
+alias: HS to RGB
+sequence:
+  - service: script.turn_on
+    target:
+      entity_id: script.{{ service_id }}
+    data:
+      variables:
+        rgb_color: >-
+          {% set h_dec = h/360 %} {% set s_dec = s/100 %}  {% set l_dec = l/100
+          %} {% if l_dec < 0.5 %} 
+            {% set temp1 = l_dec * (s_dec + 1) %} 
+          {% elif l_dec >= 0.5 %}
+            {% set temp1 = l_dec + s_dec - (l_dec * s_dec) %}
+          {% endif %} {% set temp2 = (2 * l_dec) - temp1 %} {% if h_dec + 0.333
+          > 1%}
+            {% set r_temp = h_dec - 0.667 %}
+          {% else %}
+            {% set r_temp = h_dec + 0.333 %}
+          {% endif %}
+            {% set g_temp = h_dec %}
+          {% if h_dec - 0.333 < 0 %}
+            {% set b_temp = h_dec + 0.667 %}
+          {% else %}
+            {% set b_temp = h_dec - 0.333 %}
+          {% endif %} {% if s == 0 %} 
+            {% set r = (l_dec*255) | round(0) %}
+            {% set g = (l_dec*255) | round(0) %}
+            {% set b = (l_dec*255) | round(0) %} 
+          {% else %}
+            {% if r_temp * 6 < 1 %}
+              {% set r = ((temp2 + (temp1 - temp2) * 6 * r_temp) * 255) | round(0) %}
+            {% elif r_temp * 2 < 1 %}
+              {% set r = (temp1 * 255) | round(0) %}
+            {% elif r_temp * 3 < 2 %}
+              {% set r = ((temp2 + (temp1 - temp2) * (0.666 * r_temp) * 6) * 255) | round(0) %}
+            {% else %} 
+              {% set r = (temp2 * 255) | round(0) %} 
+            {% endif %} 
+
+            {% if g_temp * 6 < 1 %}
+              {% set g = ((temp2 + (temp1 - temp2) * 6 * g_temp) * 255) | round(0) %}
+            {% elif g_temp * 2 < 1 %}
+              {% set g = (temp1 * 255) | round(0) %}
+            {% elif g_temp * 3 < 2 %}
+              {% set g = ((temp2 + (temp1 - temp2) * (0.666 * g_temp) * 6) * 255) | round(0) %} 
+            {% else %}
+              {% set g = (temp2 * 255) | round(0) %}
+            {% endif %}
+
+            {% if b_temp * 6 < 1 %} 
+              {% set b = ((temp2 + (temp1 - temp2) * 6 * b_temp) * 255) | round(0) %}
+            {% elif b_temp * 2 < 1 %}
+              {% set b = (temp1 * 255) | round(0) %}
+            {% elif b_temp * 3 < 2 %} 
+              {% set b = ((temp2 + (temp1 - temp2) * (0.666 * b_temp) * 6) * 255) | round(0) %}
+            {% else %}
+              {% set b = (temp2 * 255) | round(0) %} 
+            {% endif %}
+          {% endif %}    {{ r }},{{ g }},{{ b }}
+mode: single
+icon: mdi:palette
