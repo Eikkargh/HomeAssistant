@@ -1,366 +1,365 @@
-## Loads default set of integrations. Do not remove.
-default_config:
-
-# Text to speech
-tts:
-  - platform: google_translate
-
-automation: !include automations.yaml
-script: !include scripts.yaml
-scene: !include scenes.yaml
-
-frontend:
-  extra_module_url:
-    - /local/community/lovelace-card-mod/card-mod.js
-
-#Plant waterer Pump
-mqtt:
-  button:
-    - unique_id: waterer_pump_button
-      name: "Water Plant"
-      command_topic: "waterer/waterpump"
-      payload_press: "Requested"
-      qos: 1
-      retain: false
-    - unique_id: waterer_config_submit
-      name: "Waterer Config Submit"
-      command_topic: "waterer/config"
-      payload_press: >
-        {
-          "calibrate": "False",
-          "settings": {
-            "min_moisture": 48200,
-            "max_moisture": 18000,
-            "message_interval": 3600,
-            "max_threshold": 80,
-            "min_threshold": 10,
-            "max_water_cycles": 4,
-            "pump_on_time": 2,
-            "pump_interval": 10,
-            "reboot_days": 0
-          }
-        }
-      qos: 1
-      retain: false
-  sensor:
-    - name: "Waterer Moisture"
-      state_topic: "waterer/moisture"
-      unit_of_measurement: "%"
-    - name: "Waterer Status"
-      state_topic: "waterer/status"
-    - name: "Waterer Pump"
-      state_topic: "waterer/waterpump"
-
-sensor:
-#   Get time/date
-  - platform: time_date
-    display_options:
-      - 'time'
-      - 'date'
-
-#   Get switchbot sensors and lights
-  - platform: command_line
-    name: 'Kid Room Sensor'
-    scan_interval: 600
-    command_timeout: 30
-    command: !secret SwitchbotSensorCmd
-    value_template: '{{ value_json }}'
-    json_attributes:
-      - temperature
-      - humidity
-  - platform: command_line
-    name: 'Dining Motion'
-    scan_interval: 60
-    command_timeout: 30
-    command: !secret SwitchbotMotionCmd
-    value_template: '{{ value_json }}'
-    json_attributes:
-      - moveDetected
-      - brightness
-  - platform: command_line
-    name: 'Bedroom - Strip Light'
-    scan_interval: 30
-    command_timeout: 30
-    command: !secret SwitchbotLightCmd
-    value_template: '{{ value_json }}'
-    json_attributes:
-      - power
-      - brightness
-      - color
-    
-#Candy washer Dryer sensor
-  - platform: command_line
-    name: 'Candy Washer Dryer'
-    scan_interval: 60
-    command_timeout: 30
-    command: python3 ./pyscript/candy.py
-    value_template: '{{ value_json }}'
-    json_attributes:
-      - WiFiStatus
-      - Err
-      - MachMd
-      - Pr
-      - PrPh
-      - Temp
-      - SpinSp
-      - RemTime
-      - DryT
-      - DelVal
-      - TotalTime
-
-#Switchbot post command
-rest_command:
-  switchbot_device_command:
-    url: 'https://api.switch-bot.com/v1.0/devices/{{ deviceId }}/commands'
-    method: post
-    headers:
-      Authorization: !secret SwitchbotAPI
-      Content-Type: 'application/json'
-    payload: '{"command":"{{ command }}","parameter":"{{ parameter }}","commandType":"{{ commandType }}"}'
-
-#Switchbot Light Strip
-light:
-  - platform: template
-    lights:
-      bedroom_strip_light:
-        friendly_name: "Bedroom - Strip Light"
-        unique_id: light.bedroom_strip_light
-        icon_template: mdi:led-strip-variant
-        level_template: "{{ state_attr('sensor.bedroom_strip_light', 'brightness') | int }}"
-        color_template: "[{{ state_attr('sensor.bedroom_strip_light', 'color')[0] }},{{ state_attr('sensor.bedroom_strip_light','color')[1] }},{{ state_attr('sensor.bedroom_strip_light','color')[2] }}]"
-        value_template: "{{ state_attr('sensor.bedroom_strip_light', 'power') }}"
-        turn_on:
-          service: rest_command.switchbot_device_command
-          data:
-            deviceId: !secret SwitchbotLightId
-            command: "turnOn"
-            parameter: "default"
-            commandType: "command"
-        turn_off: 
-          service: rest_command.switchbot_device_command
-          data:
-            deviceId: !secret SwitchbotLightId
-            command: "turnOff"
-            parameter: "default"
-            commandType: "command"
-        set_level:
-          service: rest_command.switchbot_device_command
-          data:
-            deviceId: !secret SwitchbotLightId
-            command: "setBrightness"
-            parameter: "{{brightness}}"
-            commandType: "command"
-
-#switchbot scene commands
-shell_command:
-  living_room_tv_mute: !secret SwitchbotSceneTvMute
-  living_room_tv_exit: !secret SwitchbotSceneTvExit
-  living_room_tv_input: !secret SwitchbotSceneTvInput
-  living_room_tv_up: !secret SwitchbotSceneTvUp
-  living_room_tv_down: !secret SwitchbotSceneTvDown
-
-#switchbot scene activate
-switch:
-  - platform: command_line
-    switches:
-      living_room_tv_power:
-        friendly_name: "Living Room - TV Power"
-        command_on: !secret SwitchbotSceneTvOn
-        command_off: !secret SwitchbotSceneTvOff
-
-template:
-
-#switchbot TV buttons
-  - button:
-    - name: "Living Room - TV Mute"
-      icon: mdi:volume-mute
-      press:
-        service: shell_command.living_room_tv_mute
-  - button:
-    - name: "Living Room - TV Up"
-      icon: mdi:volume-plus
-      press:
-        service: shell_command.living_room_tv_up
-  - button:
-    - name: "Living Room - TV Down"
-      icon: mdi:volume-minus"
-      press:
-        service: shell_command.living_room_tv_down
-  - button:
-    - name: "Living Room - TV Exit"
-      icon: mdi:backburger
-      press:
-        service: shell_command.living_room_tv_exit
-  - button:
-    - name: "Living Room - TV Input"
-      icon: mdi:video-input-hdmi
-      press:
-        service: shell_command.living_room_tv_input
-# Date
-  - sensor:
-      - name: 'date long'
-        state: "{{ as_timestamp(states('sensor.date')) | timestamp_custom('%a %-d %b %Y') }}"
-
-#   Switchbot Sensor
-  - sensor:
-      - name: 'Kid Room Temp'
-        unit_of_measurement: '°C'
-        icon: mdi:thermometer
-        state: "{{ state_attr('sensor.kid_room_sensor', 'temperature') }}"
-  - sensor:
-      - name: 'Kid Room Humidity'
-        unit_of_measurement: '%'
-        icon: mdi:water-percent
-        state: "{{ state_attr('sensor.kid_room_sensor', 'humidity') }}"
-
-#   Switchbot Motion
-  - sensor:
-      - name: 'Dining Motion Dectected'
-        icon: mdi:motion-sensor
-        state: "{{ state_attr('sensor.dining_motion', 'moveDetected') }}"
-  - sensor:
-      - name: 'Dining Motion Brightness'
-        icon: mdi:brightness-6
-        state: "{{ state_attr('sensor.dining_motion', 'brightness') }}"
-
-#   Washer Dryer
-  - sensor:
-      - name: 'Washer/Dryer - WiFi'
-        icon: mdi:washing-machine
-        state: >
-          {% set WiFi = state_attr('sensor.candy_washer_dryer', 'WiFiStatus') | default(1) %}
-          {% if WiFi == '0' %}On
-          {% elif WiFi == '1' %}Off
-          {% else %}{{ WiFi }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Error'
-        icon: mdi:alert-circle
-        state: >
-          {% set Error = state_attr('sensor.candy_washer_dryer', 'Err') | default(255) %}
-          {% if Error == '255' %}No Errors
-          {% elif Error is number %}{{ Error }}
-          {% else %}Off
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Status'
-        icon: mdi:chart-pie
-        state: >
-          {% set Status = state_attr('sensor.candy_washer_dryer', 'MachMd') %}
-          {% if Status == "1" %}Not Started
-          {% elif Status == "2" %}Running
-          {% elif Status == "3" %}Paused
-          {% elif Status == "4" %}Setting Up
-          {% elif Status == "5" %}Delayed
-          {% elif Status == "7" %}Finished
-          {% elif Status == None %}Off
-          {% else %}{{ Status }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Program'
-        icon: mdi:progress-star
-        state: >
-          {% set Prog = state_attr('sensor.candy_washer_dryer', 'Pr') %}
-          {% if Prog == "1" %}Special
-          {% elif Prog == "2" %}Cotton
-          {% elif Prog == "3" %}Colour
-          {% elif Prog == "4" %}Daily
-          {% elif Prog == "5" %}Rapid
-          {% elif Prog == "9" %}Spin/ Drain
-          {% elif Prog == "11" %}Bed Linen
-          {% elif Prog == "12" %}Dry Low
-          {% elif Prog == "13" %}Dry High
-          {% elif Prog == "17" %}Hygeine
-          {% elif Prog == None %}Off
-          {% else %}{{ Prog }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Phase'
-        icon: mdi:progress-question
-        state: >
-          {% set Phase = state_attr('sensor.candy_washer_dryer', 'PrPh') %} 
-          {% if Phase == "0" %}Delayed
-          {% elif Phase == "1" %}Prewash
-          {% elif Phase == "2" %}Wash
-          {% elif Phase == "3" %}Rinse
-          {% elif Phase == "4" %}Spin/ Drain
-          {% elif Phase == "5" %}End
-          {% elif Phase == "6" %}Drying
-          {% elif Phase == "7" %}Error
-          {% elif Phase == "8" %}Steam
-          {% elif Phase == "9" %}Goodnight
-          {% elif Phase == "10" %}Spin
-          {% elif Phase == None %}Off
-          {% else %}{{ Phase }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Wash Temp'
-        icon: mdi:thermometer-lines
-        unit_of_measurement: '°C'
-        state: >
-          {% set Temp = state_attr('sensor.candy_washer_dryer', 'Temp') %}
-          {% if Temp == None %}0
-          {% elif Temp == "0" %}0
-          {% else %}{{ Temp }}
-          {% endif %} 
-  - sensor:
-      - name: 'Washer/Dryer - Spin Speed'
-        icon: mdi:speedometer
-        unit_of_measurement: rpm
-        state: >
-          {% set Spin = state_attr('sensor.candy_washer_dryer', 'SpinSp') %}
-          {% if Spin == None %}0
-          {% elif  Spin == "0" %}0
-          {% else %}{{ (Spin | int) * 100  }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Wash Time'
-        icon: mdi:timer
-        unit_of_measurement: 'mins'
-        state: >
-          {% set WashT = state_attr('sensor.candy_washer_dryer', 'RemTime') %}
-          {% if WashT == None %}0
-          {% else %}{{ WashT | int }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Dry Time'
-        icon: mdi:clock-time-four
-        state: >
-          {% set DryT = state_attr('sensor.candy_washer_dryer', 'DryT') %}
-          {% if DryT == None %}Off
-          {% elif DryT == "0" %}Dry Off
-          {% elif DryT == "3" %}Iron Dry
-          {% elif DryT == "4" %}Dry Finished
-          {% elif DryT == "5" %}Dry Ending
-          {% else %}{{ DryT }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Delay Time'
-        icon: mdi:timer
-        unit_of_measurement: 'hours'
-        state: >
-          {% set DelT = state_attr('sensor.candy_washer_dryer', 'DelVal') %}
-          {% if DelT == None %}0
-          {% else %}{{ DelT | int }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Total Time'
-        icon: mdi:timer
-        state: >
-          {% set TotalT = state_attr('sensor.candy_washer_dryer', 'TotalTime') %}
-          {% if TotalT == None %}0
-          {% else %}{{ TotalT }}
-          {% endif %}
-  - sensor:
-      - name: 'Washer/Dryer - Max Time'
-        icon: mdi:timer
-        state: >
-          {% set Total = states('sensor.washer_dryer_total_time') %}
-          {% set Max = states('sensor.washer_dryer_max_time') %}
-          {% if is_number( Max ) %}
-            {% if Total == 0 %}0 
-            {% elif Total > Max %}{{ Total }}
-            {% else %}{{ Max }}
-            {% endif %}
-          {% else %}0
-          {% endif %}
+title: Home
+views:
+  - theme: Backend-selected
+    title: HOME
+    path: home2
+    type: panel
+    badges: []
+    cards:
+      - type: horizontal-stack
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: entities
+                    entities:
+                      - entity: light.lumiman_smart_bulb
+                      - entity: light.kid_strip_light
+                      - entity: light.kid_room_lava_lamp
+                      - entity: switch.kid_room_socket_4
+                      - entity: switch.kid_room_dehumidify
+                      - entity: switch.kid_room_heater
+                    state_color: true
+                    title: Kid Room
+                    style: |
+                      ha-card {
+                        border-radius: 30px;
+                      }
+                      #states > div {
+                        margin: 0px 0px !important;
+                      }
+                  - show_name: false
+                    show_icon: true
+                    show_state: true
+                    type: glance
+                    style: |
+                      .entities {
+                        padding-top: 0px !important;
+                      }
+                      ha-card {
+                        border-radius: 50px;
+                      }
+                    entities:
+                      - entity: sensor.kid_room_temp
+                        style: |
+                          :host { 
+                            --paper-item-icon-color: {{
+                              '#FF3333' if states('sensor.kid_room_temp') | float > 20 else 
+                              '#CC6600' if states('sensor.kid_room_temp') | float > 15 else 
+                              '#0000CC' }};
+                          }
+                      - entity: sensor.kid_room_humidity
+                        style: |
+                          :host { 
+                            --paper-item-icon-color: {{  
+                              '#00FFFF' if states('sensor.kid_room_humidity') | float > 60 else 
+                              '#00FF00' if states('sensor.kid_room_humidity') | float > 30 else 
+                              '#CCCC00' }}; 
+                          }
+              - type: entities
+                entities:
+                  - entity: light.back_door_light
+                  - entity: light.hall_light
+                  - entity: sensor.dining_motion_dectected
+                    style: |
+                      :host { 
+                      --paper-item-icon-color: {{ 
+                        '#A12A23' if is_state('sensor.dining_motion_detected', 'True') else 
+                        '#4287F5'}}; 
+                      }
+                  - entity: sensor.dining_motion_brightness
+                    style: |
+                      :host { 
+                      --paper-item-icon-color: {{ 
+                        '#4287f5' if is_state('sensor.dining_motion_brightness', 'dim') else 
+                        '#D9A338'}}; 
+                      }
+                  - entity: humidifier.aromatherapy_machine
+                  - entity: light.aromatherapy_machine
+                  - entity: select.aromatherapy_machine_moodlighting
+                title: Kitchen/Dinning Room
+                state_color: true
+                style: |
+                  ha-card {
+                    border-radius: 30px;
+                  }
+                  #states > div {
+                    margin: 0px 0px !important;
+                  }
+          - type: vertical-stack
+            cards:
+              - type: custom:clock-weather-card
+                entity: weather.home
+                sun_entity: sun.sun
+                weather_icon_type: line
+                animated_icon: true
+                forecast_days: 5
+                locale: en
+                time_format: 24
+                date_pattern: PPP
+                scale: 80
+                style: |
+                  ha-card {
+                    border-radius: 30px;
+                  }
+                  .card-content {
+                    padding: 0 10px 16px 10px !important;
+                  }
+              - type: entities
+                entities:
+                  - type: custom:fold-entity-row
+                    head:
+                      type: custom:config-template-card
+                      variables:
+                        - states['sensor.washer_dryer_max_time'].state
+                        - states['sensor.washer_dryer_delay_time'].state
+                        - states['sensor.washer_dryer_wash_time'].state
+                        - states['sensor.washer_dryer_dry_time'].state
+                      entities:
+                        - sensor.washer_dryer_max_time
+                        - sensor.washer_dryer_total_time
+                        - sensor.washer_dryer_delay_time
+                        - sensor.washer_dryer_wash_time
+                        - sensor.washer_dryer_dry_time
+                      card:
+                        type: custom:bar-card
+                        entities:
+                          - entity: sensor.washer_dryer_total_time
+                            name: |-
+                              "${vars[1] > 0 ? 'Washer/Dryer - Delayed'
+                               : vars[3] != 'Dry Off' ? 'Washer/Dryer - Drying' 
+                               : vars[2] > 0 ? 'Washer/Dryer - Washing' 
+                               : 'Washer/Dryer - Finished'}"
+                            unit_of_measurement: mins
+                            min: '0'
+                            max: ${+vars[0]}
+                            icon: mdi:washing-machine
+                            positions:
+                              indicator: 'off'
+                            severity:
+                              - color: |-
+                                  "${vars[1] > 0 ? '#7634c7'
+                                   : vars[3] != 'Dry Off' ? '#c77634'
+                                   : vars[2] > 0 ? '#2F5A9E'
+                                   : '#a32e2e'}"
+                                from: 0
+                                to: 2000
+                        style: |
+                          ha-card {
+                            border-radius: 30px;
+                            --paper-item-icon-color: {{
+                              '#7634c7' if (states('sensor.washer_dryer_delay_time') | int > 0) else
+                              '#c77634' if (states('sensor.washer_dryer_dry_time') != 'Dry Off') else
+                              '#2F5A9E' if (states('sensor.washer_dryer_wash_time') | int > 0) else
+                              '#a32e2e' }};
+                          }
+                          .card-content {
+                            padding: 5px !important;
+                          }
+                          bar-card-background {
+                            margin: 0px 6px 0px 6px !important;
+                            border-radius: 30px;
+                          }
+                          bar-card-backgroundbar {
+                            --bar-color: '#000000' !important;
+                          }
+                          bar-card-currentbar {
+                            border-radius: 30px
+                          }
+                    entities:
+                      - entity: sensor.washer_dryer_status
+                        name: Status
+                      - entity: sensor.washer_dryer_program
+                        name: Program
+                      - entity: sensor.washer_dryer_phase
+                        name: Phase
+                      - entity: sensor.washer_dryer_wash_temp
+                        name: Wash Temp
+                      - entity: sensor.washer_dryer_spin_speed
+                        name: Spin Speed
+                      - entity: sensor.washer_dryer_dry_time
+                        name: Dry Setting
+                      - entity: sensor.washer_dryer_wash_time
+                        name: Cycle Time
+                      - entity: sensor.washer_dryer_delay_time
+                        name: Delay Time
+                      - entity: sensor.washer_dryer_error
+                        name: Error
+                    style: |
+                      #items {
+                        padding: 0px 20px 0px 10px !important;
+                      }
+                      ha-icon {
+                        margin: 4px !important;
+                style: |
+                  .card-content {
+                    padding: 5px !important;
+                  }
+                  ha-card {
+                    border-radius: 30px;
+                  }
+                  #states > div {
+                    margin: 0px 0px !important;
+                  }
+          - type: vertical-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: light.bedroom_light
+                  - entity: light.bedroom_fairy_lights
+                  - entity: light.bedroom_strip_light
+                  - entity: fan.bedroom_fan
+                title: Bedroom
+                style: |
+                  ha-card {
+                    border-radius: 30px;
+                  }
+                  #states > div {
+                    margin: 0px 0px !important;
+                  }
+              - type: entities
+                entities:
+                  - entity: light.living_room_book_lamp
+                  - entity: light.living_room_side_light
+                  - entity: light.desk_lamp
+                  - entity: switch.living_room_fan_heater
+                  - entity: climate.fan_heater
+                title: Living Room
+                state_color: true
+                style: |
+                  ha-card {
+                    border-radius: 30px;
+                  }
+                  #states > div {
+                    margin: 0px 0px !important;
+                  }
+                  :host {
+                    --paper-item-icon-color: {{ '#FF0000' if
+                      is_state('climate.fan_heater', 'heat') else  
+                      '#337FFF'}};
+                  }
+              - square: false
+                columns: 2
+                type: grid
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: call-service
+                      service: mqtt.publish
+                      data:
+                        topic: waterer/waterpump
+                        payload: Requested
+                      target: {}
+                    double_tap_action:
+                      action: call-service
+                      service: mqtt.publish
+                      data:
+                        topic: waterer/waterpump
+                        payload: Cancelled
+                      target: {}
+                    hold_action:
+                      action: call-service
+                      service: mqtt.publish
+                      data:
+                        topic: waterer/restart
+                        payload: Reboot
+                      target: {}
+                    entity: button.water_pump
+                    icon: mdi:water-pump
+                    icon_height: 40px
+                    style: |
+                      :host { 
+                        --state-unavailable-color: {{
+                          '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                          '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                          '#0000FF' }} !important; 
+                        --paper-item-icon-color: {{  
+                          '#00FF00' if is_state('sensor.waterer_status', 'Moist') else
+                          '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                          '#0000FF' }}; 
+                      }
+                      ha-card {
+                      margin: 0px 40px 0px 40px;
+                      border-radius: 100px;
+                      border-style: solid;
+                      border-color: {{ 
+                        '#00FF00'  if is_state('sensor.waterer_status', 'Moist')  else  
+                        '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                        '#0000FF' }}; 
+                      }
+                  - type: entities
+                    entities:
+                      - entity: sensor.waterer_status
+                        name: Soil State
+                        icon: mdi:sprout
+                        style: |
+                          :host { 
+                          --paper-item-icon-color: {{ 
+                            '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                            '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                            '#0000FF' }}; 
+                          }
+                      - entity: sensor.waterer_moisture
+                        name: Moisture
+                        icon: mdi:water
+                        style: |
+                          :host { 
+                          --paper-item-icon-color: {{ 
+                            '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                            '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                            '#0000FF' }}; 
+                          }
+                      - entity: sensor.waterer_pump
+                        name: Pump
+                        icon: mdi:water-pump
+                        style: |
+                          :host { 
+                            --paper-item-icon-color: {{ 
+                            '#FFFF00' if is_state('sensor.waterer_pump', 'Requested') else 
+                            '#CC6600' if is_state('sensor.waterer_pump', 'Cancelled') else 
+                            '#00FFFF' if is_state('sensor.waterer_pump', 'Low Water') else 
+                            '#00FF00' }}; 
+                            }
+                    state_color: true
+                    style: |
+                      ha-card {
+                        margin: 0 10px 0 0;
+                        border-radius: 15px;
+                        }
+                      #states > div {
+                        margin: 0px 0px !important;
+                      }
+  - theme: Backend-selected
+    title: Cameras
+    path: camera
+    badges: []
+    cards:
+      - show_state: false
+        show_name: true
+        camera_view: auto
+        type: picture-entity
+        entity: camera.back_porch
+        tap_action:
+          action: call-service
+          service: light.toggle
+          data: {}
+          target:
+            entity_id: light.back_door_light
+        camera_image: camera.back_porch
+        hold_action:
+          action: more-info
+      - show_state: false
+        show_name: true
+        camera_view: auto
+        type: picture-entity
+        entity: camera.pi_camera
+        camera_image: camera.pi_camera
+        tap_action:
+          action: call-service
+          service: light.toggle
+          data: {}
+          target:
+            entity_id: light.living_room_side_light
