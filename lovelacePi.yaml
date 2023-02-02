@@ -253,8 +253,8 @@ views:
                   - entity: sensor.washer_dryer_total_time
                     name: |-
                       "${vars[1] > 0 ? 'Washer/Dryer - Delayed'
-                       : vars[2] > 0 ? 'Washer/Dryer - Washing' 
-                       : vars[3] > 0 ? 'Washer/Dryer - Drying' 
+                       : vars[3] != 'Dry Off' ? 'Washer/Dryer - Drying'
+                       : vars[2] > 0 ? 'Washer/Dryer - Washing'  
                        : 'Washer/Dryer - Finished'}"
                     unit_of_measurement: mins
                     min: '0'
@@ -265,17 +265,32 @@ views:
                     severity:
                       - color: |-
                           "${vars[1] > 0 ? '#7634c7'
-                           : vars[2] > 0 ? '#34acc7'
-                           : vars[3] > 0 ? '#c77634'
+                           : vars[3] != 'Dry Off' ? '#c77634'
+                           : vars[2] > 0 ? '#2f5a9e'
                            : '#a32e2e'}"
                         from: 0
                         to: 2000
+                    tap_action:
+                      action: navigate
+                      navigation_path: washing-machine
                 style: |
                   ha-card {
-                    border-radius: 15px;
+                    border-radius: 30px;
+                    --paper-item-icon-color: {{
+                      '#7634c7' if (states('sensor.washer_dryer_delay_time') | int > 0) else
+                      '#c77634' if (states('sensor.washer_dryer_dry_time') != 'Dry Off') else
+                      '#2f5a9e' if (states('sensor.washer_dryer_wash_time') | int > 0) else
+                      '#a32e2e' }};
+                  }
+                  bar-card-background {
+                    border-radius: 30px;
                   }
                   bar-card-backgroundbar {
                     --bar-color: '#000000' !important;
+                      border-radius: 30px;
+                  }
+                  bar-card-currentbar {
+                    border-radius: 30px;
                   }
   - theme: Backend-selected
     title: Cameras
@@ -391,7 +406,7 @@ views:
     title: Washing Machine
     path: washing-machine
     icon: mdi:washing-machine
-    type: panel
+    subview: true
     badges: []
     cards:
       - type: vertical-stack
