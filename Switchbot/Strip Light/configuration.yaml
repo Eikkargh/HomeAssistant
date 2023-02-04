@@ -1,0 +1,66 @@
+#   Get switchbot Strip Light sensors
+  - platform: command_line
+    name: 'Bedroom - Strip Light'
+    scan_interval: 30
+    command_timeout: 30
+    command: !secret SwitchbotLightCmd
+    value_template: '{{ value_json }}'
+    json_attributes:
+      - power
+      - brightness
+      - color
+
+#Switchbot post command
+rest_command:
+  switchbot_device_command:
+    url: 'https://api.switch-bot.com/v1.0/devices/{{ deviceId }}/commands'
+    method: post
+    headers:
+      Authorization: !secret SwitchbotAPI
+      Content-Type: 'application/json'
+    payload: '{"command":"{{ command }}","parameter":"{{ parameter }}","commandType":"{{ commandType }}"}'
+
+#Switchbot Light Strip
+light:
+  - platform: template
+    lights:
+      bedroom_strip_light:
+        friendly_name: "Bedroom - Strip Light"
+        unique_id: light.bedroom_strip_light
+        icon_template: mdi:led-strip-variant
+        level_template: "{{ state_attr('sensor.bedroom_strip_light', 'brightness') | int }}"
+        color_template: "{{ states('input_text.bedroom_strip_hs').split(',')[0] | int}},{{ states('input_text.bedroom_strip_hs').split(',')[1] | int }}"
+        value_template: "{{ state_attr('sensor.bedroom_strip_light', 'power') }}"
+        turn_on:
+          service: rest_command.switchbot_device_command
+          data:
+            deviceId: !secret SwitchbotLightId
+            command: "turnOn"
+            parameter: "default"
+            commandType: "command"
+        turn_off: 
+          service: rest_command.switchbot_device_command
+          data:
+            deviceId: !secret SwitchbotLightId
+            command: "turnOff"
+            parameter: "default"
+            commandType: "command"
+        set_level:
+          service: rest_command.switchbot_device_command
+          data:
+            deviceId: !secret SwitchbotLightId
+            command: "setBrightness"
+            parameter: "{{brightness}}"
+            commandType: "command"
+        set_color:
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.bedroom_strip_hs
+            data:
+              value: "{{ h }},{{ s }},70"
+          - service: script.hs_to_rgb
+            data:
+              service_id: bedroom_strip_set_color
+              h: "{{ h }}"
+              s: "{{ s }}"
+              l: 70
