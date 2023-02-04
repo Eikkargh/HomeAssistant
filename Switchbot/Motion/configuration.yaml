@@ -1,0 +1,27 @@
+# Switchbot Motion Get JSON
+sensor: 
+  - platform: command_line
+    name: 'Dining Motion'
+    scan_interval: 60
+    command_timeout: 30
+    command: "curl -H 'Authorization: <API_KEY_HERE>' -H 'Accept: appication/JSON' https://api.switch-bot.com/v1.0/devices/F1BA6918BC9D/status | jq '.body'"
+    value_template: '{{ value_json }}'
+    json_attributes:
+      - moveDetected
+      - brightness
+
+#   Switchbot Motion Sensor
+## Other Sensors ##
+  - sensor:
+      - name: 'Dining Motion Dectected'
+        icon: mdi:motion-sensor
+        state: "{{ state_attr('sensor.dining_motion', 'moveDetected') }}"
+  - sensor:
+      - name: 'Dining Motion Brightness'
+        icon: mdi:brightness-6
+        state: >
+          {% set brightness = state_attr('sensor.dining_motion', 'brightness') %}
+          {% if brightness == 'bright' %}Bright
+          {% elif brightness == 'dim' %}Dim
+          {% else %}{{ brightness }}
+          {% endif %}
