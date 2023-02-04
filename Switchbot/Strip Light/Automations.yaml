@@ -1,0 +1,16 @@
+- id: '1675212697206'
+  alias: Bedroom - Strip RGB to HS
+  description: Converts lights RGB value to HS for use in bedroom strip sensor.
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.bedroom_strip_light
+  condition: []
+  action:
+  - service: script.rgb_to_hs
+    data:
+      inputName: bedroom_strip_hs
+      r: '{{state_attr(''sensor.bedroom_strip_light'',''color'').split('':'')[0] }}'
+      g: '{{state_attr(''sensor.bedroom_strip_light'',''color'').split('':'')[1] }}'
+      b: '{{state_attr(''sensor.bedroom_strip_light'',''color'').split('':'')[2] }}'
+  mode: single
