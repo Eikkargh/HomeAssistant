@@ -1,5 +1,5 @@
 # HomeAssistant
-Home Assistant config files
+Home Assistant config files by device
 
 Contents:
 <ul>
