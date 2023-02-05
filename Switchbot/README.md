@@ -1,10 +1,10 @@
 ## Switchbot API
 
 ### Current Device
-- Strip Light
-- Motion Sensor
-- Temperature/ Humidity Sensor
-- Scenes
+- [Strip Light](https://github.com/Eikkargh/HomeAssistant/tree/main/Switchbot/Strip%20Light)
+- [Motion Sensor](https://github.com/Eikkargh/HomeAssistant/tree/main/Switchbot/Motion)
+- [Temperature/ Humidity Sensor](https://github.com/Eikkargh/HomeAssistant/tree/main/Switchbot/Temp-Humidity%20Sensor)
+- [Scenes](https://github.com/Eikkargh/HomeAssistant/tree/main/Switchbot/Scenes) (Also used for Switchbot IR with Hub)
 
 ### Steps:
 1. Get API Key from mobile app developer options (press "App Version" 10 times if no developer option).
