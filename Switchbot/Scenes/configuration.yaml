@@ -1,0 +1,44 @@
+shell_command:
+  living_room_tv_mute: !secret SwitchbotSceneTvMute
+  living_room_tv_exit: !secret SwitchbotSceneTvExit
+  living_room_tv_input: !secret SwitchbotSceneTvInput
+  living_room_tv_up: !secret SwitchbotSceneTvUp
+  living_room_tv_down: !secret SwitchbotSceneTvDown
+
+switch:
+#switchbot TV power
+  - platform: command_line
+    switches:
+      living_room_tv_power:
+        friendly_name: "Living Room - TV Power"
+        command_on: !secret SwitchbotSceneTvOn
+        command_off: !secret SwitchbotSceneTvOff
+
+template:
+#switchbot TV buttons
+  - button:
+    - name: "Living Room - TV Mute"
+      icon: mdi:volume-mute
+      press:
+        service: shell_command.living_room_tv_mute
+  - button:
+    - name: "Living Room - TV Up"
+      icon: mdi:volume-plus
+      press:
+        service: shell_command.living_room_tv_up
+  - button:
+    - name: "Living Room - TV Down"
+      icon: mdi:volume-minus"
+      press:
+        service: shell_command.living_room_tv_down
+  - button:
+    - name: "Living Room - TV Exit"
+      icon: mdi:backburger
+      press:
+        service: shell_command.living_room_tv_exit
+  - button:
+    - name: "Living Room - TV Input"
+      icon: mdi:video-input-hdmi
+      press:
+        service: shell_command.living_room_tv_input        
+        
