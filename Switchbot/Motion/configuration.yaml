@@ -4,7 +4,7 @@ sensor:
     name: 'Dining Motion'
     scan_interval: 60
     command_timeout: 30
-    command: "curl -H 'Authorization: <API_KEY_HERE>' -H 'Accept: appication/JSON' https://api.switch-bot.com/v1.0/devices/F1BA6918BC9D/status | jq '.body'"
+    command: !secret SwitchbotMotionCmd
     value_template: '{{ value_json }}'
     json_attributes:
       - moveDetected
