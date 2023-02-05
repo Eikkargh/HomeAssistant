@@ -10,8 +10,8 @@ sensor:
       - moveDetected
       - brightness
 
-#   Switchbot Motion Sensor
-## Other Sensors ##
+# Switchbot Motion Template
+Template:
   - sensor:
       - name: 'Dining Motion Dectected'
         icon: mdi:motion-sensor
