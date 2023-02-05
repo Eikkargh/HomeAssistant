@@ -1,0 +1,22 @@
+sensor:
+  - platform: command_line
+    name: 'Kid Room Sensor'
+    scan_interval: 600
+    command_timeout: 30
+    command: !secret SwitchbotSensorCmd
+    value_template: '{{ value_json }}'
+    json_attributes:
+      - temperature
+      - humidity
+
+template:
+  - sensor:
+      - name: 'Kid Room Temp'
+        unit_of_measurement: '°C'
+        icon: mdi:thermometer
+        state: "{{ state_attr('sensor.kid_room_sensor', 'temperature') }}"
+  - sensor:
+      - name: 'Kid Room Humidity'
+        unit_of_measurement: '%'
+        icon: mdi:water-percent
+        state: "{{ state_attr('sensor.kid_room_sensor', 'humidity') }}"
