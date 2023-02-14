@@ -28,8 +28,8 @@ light:
         friendly_name: "Bedroom - Strip Light"
         unique_id: light.bedroom_strip_light
         icon_template: mdi:led-strip-variant
-        level_template: "{{ state_attr('sensor.bedroom_strip_light', 'brightness') | int }}"
-        color_template: "{{ states('input_text.bedroom_strip_hs').split(',')[0] | int}},{{ states('input_text.bedroom_strip_hs').split(',')[1] | int }}"
+        level_template: "{{ state_attr('sensor.bedroom_strip_light', 'brightness') | int(default=20) }}"
+        color_template: "{{ states('input_text.bedroom_strip_hs').split(',')[0] | int(default=0)}},{{ states('input_text.bedroom_strip_hs').split(',')[1] | int(default=0)}}"
         value_template: "{{ state_attr('sensor.bedroom_strip_light', 'power') }}"
         turn_on:
           service: rest_command.switchbot_device_command
@@ -57,10 +57,10 @@ light:
             target:
               entity_id: input_text.bedroom_strip_hs
             data:
-              value: "{{ h }},{{ s }},70"
+              value: "{{ h }},{{ s }},{{ states('input_text.bedroom_strip_hs').split(',')[2] | int(default=100) }}"
           - service: script.hs_to_rgb
             data:
               service_id: bedroom_strip_set_color
               h: "{{ h }}"
               s: "{{ s }}"
-              l: 70
+              l: "{{ states('input_text.bedroom_strip_hs').split(',')[2] | int(default=100) }}"
