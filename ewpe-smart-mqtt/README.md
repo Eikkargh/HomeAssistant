@@ -1,12 +1,16 @@
 # ewpe-mqtt-smart
 
 Works with: Lexent Mevagissey 16L Dehumidifier
-Uses: - [ewpe-smart-mqtt](https://github.com/stas-demydiuk/ewpe-smart-mqtt) node created by [stas-demydiuk](https://github.com/stas-demydiuk)
-      - Home Assistant
-      - EWPE Smart - Android app
-      - Local Mosquitto MQTT Broker
+
+Uses: 
+- [ewpe-smart-mqtt](https://github.com/stas-demydiuk/ewpe-smart-mqtt) node created by [stas-demydiuk](https://github.com/stas-demydiuk)
+- Home Assistant
+- EWPE Smart - Android app
+- Local Mosquitto MQTT Broker
+
 
 ##Instructions
+
 1. Check for/install node
 ``` 
 node --version
