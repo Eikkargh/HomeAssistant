@@ -1,4 +1,4 @@
-## Loads default set of integrations. Do not remove.
+# Loads default set of integrations. Do not remove.
 default_config:
 
 # Text to speech
@@ -13,7 +13,7 @@ frontend:
   extra_module_url:
     - /local/community/lovelace-card-mod/card-mod.js
 
-#Plant waterer Pump
+#Plant Waterer Buttons
 mqtt:
   button:
     - unique_id: waterer_pump_button
@@ -22,27 +22,42 @@ mqtt:
       payload_press: "Requested"
       qos: 1
       retain: false
+    - unique_id: waterer_cancel
+      name: "Cancel Water"
+      command_topic: "waterer/waterpump"
+      payload_press: "Cancelled"
+      qos: 1
+      retain: false
+    - unique_id: waterer_reboot
+      name: "Waterer Reboot"
+      command_topic: "waterer/waterpump"
+      payload_press: "Reboot"
+      qos: 1
+      retain: false
     - unique_id: waterer_config_submit
       name: "Waterer Config Submit"
       command_topic: "waterer/config"
+      entity_category: config
       payload_press: >
         {
-          "calibrate": "False",
+          "calibrate": "True",
           "settings": {
-            "min_moisture": 48200,
-            "max_moisture": 18000,
-            "message_interval": 3600,
-            "max_threshold": 80,
-            "min_threshold": 10,
-            "max_water_cycles": 4,
-            "pump_on_time": 2,
-            "pump_interval": 10,
-            "reboot_days": 0
+            "min_moisture": {{ states('input_number.waterer_min_moisture') }},
+            "max_moisture": {{ states('input_number.waterer_max_moisture') }},
+            "message_interval": {{ states('input_number.waterer_message_interval') }},
+            "max_threshold": {{ states('input_number.waterer_max_threshold') }},
+            "min_threshold": {{ states('input_number.waterer_min_threshold') }},
+            "max_water_cycles": {{ states('input_number.waterer_max_water_cycles') }},
+            "pump_on_time": {{ states('input_number.waterer_pump_on_time') }},
+            "pump_interval": {{ states('input_number.waterer_pump_interval') }},
+            "reboot_days": {{ states('input_number.waterer_reboot_days') }}
           }
         }
       qos: 1
-      retain: false
+      retain: true
+
   sensor:
+#Plant Waterer Sensors
     - name: "Waterer Moisture"
       state_topic: "waterer/moisture"
       unit_of_measurement: "%"
@@ -50,6 +65,20 @@ mqtt:
       state_topic: "waterer/status"
     - name: "Waterer Pump"
       state_topic: "waterer/waterpump"
+    - name: "Waterer Raw"
+      state_topic: "waterer/raw"
+    - name: "Waterer Config"
+      state_topic: "waterer/config"
+      value_template: "{{ value_json.settings }}"
+      json_attributes_topic: "waterer/config"
+      json_attributes_template: "{{ value_json.settings | tojson }}"
+
+#Dehumidifier MQTT Sensor
+    - name: "EWPE Dehumidifier"
+      state_topic: "ewpe-smart/502cc6677159/status"
+      value_template: "{{ value_json }}"
+      json_attributes_topic: "ewpe-smart/502cc6677159/status"
+      json_attributes_template: "{{ value_json | tojson }}"
 
 sensor:
 #   Get time/date
@@ -57,6 +86,22 @@ sensor:
     display_options:
       - 'time'
       - 'date'
+
+#   Waterer Max/Min
+  - platform: statistics
+    name: 'Waterer - Min Check'
+    entity_id: sensor.waterer_raw
+    state_characteristic: value_max
+    sampling_size: 800
+    max_age:
+      days: 28
+  - platform: statistics
+    name: 'Waterer - Max Check'
+    entity_id: sensor.waterer_raw
+    state_characteristic: value_min
+    sampling_size: 800
+    max_age:
+      days: 28
 
 #   Get switchbot sensors and lights
   - platform: command_line
@@ -126,8 +171,8 @@ light:
         friendly_name: "Bedroom - Strip Light"
         unique_id: light.bedroom_strip_light
         icon_template: mdi:led-strip-variant
-        level_template: "{{ state_attr('sensor.bedroom_strip_light', 'brightness') | int }}"
-        color_template: "{{ states('input_text.bedroom_strip_hs').split(',')[0] | int}},{{ states('input_text.bedroom_strip_hs').split(',')[1] | int }}"
+        level_template: "{{ state_attr('sensor.bedroom_strip_light', 'brightness') | int(default=20) }}"
+        color_template: "{{ states('input_text.bedroom_strip_hs').split(',')[0] | int(default=0)}},{{ states('input_text.bedroom_strip_hs').split(',')[1] | int(default=0)}}"
         value_template: "{{ state_attr('sensor.bedroom_strip_light', 'power') }}"
         turn_on:
           service: rest_command.switchbot_device_command
@@ -155,13 +200,13 @@ light:
             target:
               entity_id: input_text.bedroom_strip_hs
             data:
-              value: "{{ h }},{{ s }},70"
+              value: "{{ h }},{{ s }},{{ states('input_text.bedroom_strip_hs').split(',')[2] | int(default=100) }}"
           - service: script.hs_to_rgb
             data:
               service_id: bedroom_strip_set_color
               h: "{{ h }}"
               s: "{{ s }}"
-              l: 70
+              l: "{{ states('input_text.bedroom_strip_hs').split(',')[2] | int(default=100) }}"
 
 #switchbot scene commands
 shell_command:
@@ -179,6 +224,8 @@ switch:
         friendly_name: "Living Room - TV Power"
         command_on: !secret SwitchbotSceneTvOn
         command_off: !secret SwitchbotSceneTvOff
+
+#living room fan heater switch
   - platform: template
     switches:
       living_room_fan_heater:
@@ -194,6 +241,66 @@ switch:
           target:
             entity_id: climate.fan_heater
    
+#dehumidifier switches
+      ewpe_dehumidifier_power:
+        friendly_name: 'EWPE Dehumidifier Power'
+        unique_id: ewpe_dehumidifier_power
+        icon_template: mdi:power
+        value_template: >
+          {% set Power = state_attr('sensor.ewpe_dehumidifier','Pow') %}
+          {% if Power == 1 %}On
+          {% else %}Off
+          {% endif %}
+        turn_on: 
+          service: mqtt.publish
+          data:
+            topic: ewpe-smart/502cc6677159/set
+            payload: '{"Pow":1}'
+        turn_off:
+          service: mqtt.publish
+          data:
+            topic: ewpe-smart/502cc6677159/set
+            payload: '{"Pow":0}'
+      ewpe_dehumidifier_fan:
+        friendly_name: 'EWPE Dehumidifier Fan'
+        unique_id: ewpe_dehumidifier_fan
+        icon_template: mdi:fan
+        value_template: >
+          {% set Fan = state_attr('sensor.ewpe_dehumidifier','WdSpd') %}
+          {% if Fan == 3 %}On
+          {% else %}Off
+          {% endif %}
+        turn_on:
+          service: mqtt.publish
+          data:
+            topic: ewpe-smart/502cc6677159/set
+            payload: '{"WdSpd":3}'
+        turn_off:
+          service: mqtt.publish
+          data:
+            topic: ewpe-smart/502cc6677159/set
+            payload: '{"WdSpd":1}'
+      ewpe_dehumidifier_health:
+        friendly_name: 'EWPE Dehumidifier Health'
+        unique_id: ewpe_dehumidifier_health
+        icon_template: mdi:bottle-tonic-plus
+        value_template: >
+          {% set Health = state_attr('sensor.ewpe_dehumidifier','Health') %}
+          {% if Health == 1 %}On
+          {% else %}Off
+          {% endif %}
+        turn_on:
+          service: mqtt.publish
+          data:
+            topic: ewpe-smart/502cc6677159/set
+            payload: '{"Health":1}'
+        turn_off:
+          service: mqtt.publish
+          data:
+            topic: ewpe-smart/502cc6677159/set
+            payload: '{"Health":0}'
+
+
 template:
 #switchbot TV buttons
   - button:
@@ -221,6 +328,7 @@ template:
       icon: mdi:video-input-hdmi
       press:
         service: shell_command.living_room_tv_input
+
 # Date
   - sensor:
       - name: 'date long'
@@ -235,7 +343,7 @@ template:
   - sensor:
       - name: 'Kid Room Humidity'
         unit_of_measurement: '%'
-        icon: mdi:water-percent
+        icon: mdi:cloud-percent
         state: "{{ state_attr('sensor.kid_room_sensor', 'humidity') }}"
 
 #   Switchbot Motion
@@ -382,15 +490,77 @@ template:
           {% else %}{{ TotalT }}
           {% endif %}
   - sensor:
+      - name: 'Washer/Dryer - Max Delay'
+        icon: mdi:timer
+        state: >
+          {% set Status = states('sensor.washer_dryer_wifi') %}
+          {% set Delay = states('sensor.washer_dryer_delay_time') | int(default=0) * 60 %}
+          {% set DelayMax = states('sensor.washer_dryer_max_delay') | int(default=0) %}
+          {% set Total = states('sensor.washer_dryer_total_time') | int %}
+          {% if Total == 0 %}0
+          {% elif Status == 'Off' %}{{ DelayMax }}
+          {% elif DelayMax >= Delay %}{{ DelayMax }}
+          {% else %}{{ Delay }}
+          {% endif %}              
+  - sensor:
       - name: 'Washer/Dryer - Max Time'
         icon: mdi:timer
         state: >
-          {% set Total = states('sensor.washer_dryer_total_time') %}
-          {% set Max = states('sensor.washer_dryer_max_time') %}
-          {% if is_number( Max ) %}
-            {% if Total == 0 %}0 
-            {% elif Total > Max %}{{ Total }}
-            {% else %}{{ Max }}
-            {% endif %}
-          {% else %}0
+          {% set Status = states('sensor.washer_dryer_wifi') %}
+          {% set Total = states('sensor.washer_dryer_total_time') | int(default=0) %}
+          {% set TMax = states('sensor.washer_dryer_max_time') | int(default=0) %}
+          {% set DelayMax = states('sensor.washer_dryer_delay_max') | int(default=0) %}
+          {% if Total == 0 %}0
+          {% elif Status == 'Off' %}{{ TMax }}
+          {% elif Total <= (TMax - DelayMax) %}{{ TMax }}
+          {% else %}{{ Total }}
           {% endif %}
+
+#EWPE Dehumidifier
+  - sensor:
+      - name: 'EWPE Dehumidifier Humidity'
+        icon: mdi:cloud-percent
+        state: "{{ state_attr('sensor.ewpe_dehumidifier','DwatSen') }}"
+        unit_of_measurement: '%'
+  - sensor:
+      - name: 'EWPE Dehumidifier Target Humidity'
+        icon: mdi:cloud-percent
+        state: "{{ (state_attr('sensor.ewpe_dehumidifier','Dwet')-3) * 5 + 30 }}"
+        unit_of_measurement: '%'
+  - sensor:
+      - name: 'EWPE Dehumidifier Mode'
+        icon: mdi:list-box-outline
+        state: >
+          {% set Mode = state_attr('sensor.ewpe_dehumidifier','Dmod') %}
+          {% if Mode == 0 %}Home
+          {% elif Mode == 1 %}Away
+          {% else %}Unknown - {{ Mode }}
+          {% endif %}
+  - sensor:
+      - name: 'EWPE Dehumidifier Full'
+        icon: mdi:gauge-full
+        state: >
+          {% set Full = state_attr('sensor.ewpe_dehumidifier','DwatFul') %}
+          {% if Full == 0 %}OK
+          {% elif Full == 1 %}Full
+          {% else %}{{ Full }}
+          {% endif %}
+  - sensor:
+      - name: 'EWPE Dehumidifier Filter'
+        icon: mdi:air-filter
+        state: >
+          {% set Filter = state_attr('sensor.ewpe_dehumidifier','Dfltr') %}
+          {% if Filter == 0 %}OK
+          {% elif Filter == 1 %}Change
+          {% else %}{{ Filter }}
+          {% endif %}
+  - sensor:
+      - name: 'EWPE Dehumidifier Temp'
+        icon: mdi:thermometer
+        state: "{{ state_attr('sensor.ewpe_dehumidifier','TemSen') }}"
+        unit_of_measurement: '°C'
+  - sensor:
+      - name: 'EWPE Dehumidifier Error'
+        icon: mdi:alert-octagon
+        state: "{{ state_attr('sensor.ewpe_dehumidifier','AllErr') }}"
+
