@@ -1,33 +1,3 @@
-- id: '1672512021653'
-  alias: Kid Room - Auto Dehumidify On
-  description: ''
-  trigger:
-  - platform: numeric_state
-    entity_id: sensor.kid_room_sensor
-    above: '60'
-    attribute: humidity
-  condition: []
-  action:
-  - service: switch.turn_on
-    data: {}
-    target:
-      entity_id: switch.kid_room_dehumidify
-  mode: single
-- id: '1672512548497'
-  alias: Kid Room - Auto Dehumidify Off
-  description: ''
-  trigger:
-  - platform: numeric_state
-    entity_id: sensor.kid_room_sensor
-    below: '50'
-    attribute: humidity
-  condition: []
-  action:
-  - service: switch.turn_off
-    data: {}
-    target:
-      entity_id: switch.kid_room_dehumidify
-  mode: single
 - id: '1672512996986'
   alias: Kid Room - Auto Heater On
   description: ''
@@ -91,3 +61,91 @@
       g: '{{state_attr(''sensor.bedroom_strip_light'',''color'').split('':'')[1] }}'
       b: '{{state_attr(''sensor.bedroom_strip_light'',''color'').split('':'')[2] }}'
   mode: single
+- id: '1677234186338'
+  alias: Waterer - Config Update
+  description: Updates the default values of input numbers
+  trigger:
+  - platform: mqtt
+    topic: waterer/config
+  condition: []
+  action:
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''min_moisture'') }}'
+    target:
+      entity_id: input_number.waterer_min_moisture
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''max_moisture'') }}'
+    target:
+      entity_id: input_number.waterer_max_moisture
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''message_interval'') }}'
+    target:
+      entity_id: input_number.waterer_message_interval
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''min_threshold'') }}'
+    target:
+      entity_id: input_number.waterer_min_threshold
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''max_threshold'') }}'
+    target:
+      entity_id: input_number.waterer_max_threshold
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''max_water_cycles'') }}'
+    target:
+      entity_id: input_number.waterer_max_water_cycles
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''pump_on_time'') }}'
+    target:
+      entity_id: input_number.waterer_pump_on_time
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''pump_interval'') }}'
+    target:
+      entity_id: input_number.waterer_pump_interval
+  - service: input_number.set_value
+    data:
+      value: '{{ state_attr(''sensor.waterer_config'', ''reboot_days'') }}'
+    target:
+      entity_id: input_number.waterer_reboot_days
+  mode: single
+- id: '1682073689544'
+  alias: EWPE Dehumidifier - Update Target Humidity
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.ewpe_dehumidifier_target_humidity
+  - platform: state
+    entity_id:
+    - sensor.ewpe_dehumidifier
+  condition: []
+  action:
+  - service: input_number.set_value
+    data:
+      value: '{{ ((state_attr(''sensor.ewpe_dehumidifier'',''Dwet'')|int)-3)*5+30
+        }}'
+    target:
+      entity_id: input_number.ewpe_dehumidifier_set_humidity
+  mode: single
+- id: '1682191011072'
+  alias: EWPE Dehumidifier - Set Target Humidity
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_number.ewpe_dehumidifier_set_humidity
+  condition: []
+  action:
+  - service: mqtt.publish
+    data:
+      topic: ewpe-smart/502cc6677159/set
+      payload_template: >-
+        {% set Hum = ((states('input_number.ewpe_dehumidifier_set_humidity')|int)-30)/5+3 | int %}{"Dwet":{{Hum|int}}}
+  mode: restart
