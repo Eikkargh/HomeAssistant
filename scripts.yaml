@@ -1,116 +1,106 @@
-alias: Bedroom - Strip - Set Color
-sequence:
-  - service: rest_command.switchbot_device_command
+rgb_to_hs:
+  alias: RGB to HS
+  sequence:
+  - service: input_text.set_value
+    target:
+      entity_id: input_text.{{inputName}}
     data:
-      deviceId: A0764E36C0E2
-      command: setColor
-      parameter: "{{rgb_color[0]}}:{{rgb_color[1]}}:{{rgb_color[2]}}"
-      commandType: command
-mode: single
-icon: mdi:palette
-alias: HS to RGB
-sequence:
+      value: "{% set r_dec = (r | int)/255 %}\n{% set g_dec = (g | int)/255 %} \n{%
+        set b_dec = (b | int)/255 %}\n{% set rgb_decimal = r_dec,g_dec,b_dec %}\n\n{%
+        set maxc = rgb_decimal | max %} \n{% set minc = rgb_decimal | min %} \n{%
+        set l_dec = (maxc + minc) / 2 %} \n{% set l = (l_dec * 100) | int %}\n\n{%
+        if maxc == minc %}  \n  {% set s_dec = 0 %}\n{% elif l_dec <= 0.5 %}\n  {%
+        set s_dec = (maxc - minc) / (maxc + minc + 0.001) %}\n{% else %}\n  {% set
+        s_dec = (maxc - minc) / (2.0 - maxc - minc) %}\n{% endif %}\n\n{% set s =
+        (s_dec * 100) | int %} \n{% if r_dec == maxc %}\n  {% set h_deg = ((g_dec
+        - b_dec) / (maxc - minc + 0.001)) * 60 %}\n{% elif g_dec == maxc %}\n  {%
+        set h_deg = ((2.0 + (b_dec - r_dec)) / (maxc - minc + 0.001)) * 60 %}\n{%
+        else %}\n  {% set h_deg = ((4.0 + (r_dec - g_dec)) / (maxc - minc + 0.001))
+        * 60 %}\n{% endif %}\n\n{% if h_deg < 0 %}\n  {% set h = h_deg + 360 %}\n{%
+        elif h_deg > 360 %}\n  {% set h = h_deg - 360 %}\n{% else %}\n  {% set h =
+        h_deg %}\n{% endif %}\n\n{{ h | round(0)}},{{ s | round(0)}},{{ l | round(0)
+        }}"
+  mode: single
+  icon: mdi:palette
+hs_to_rgb:
+  alias: HS to RGB
+  sequence:
   - service: script.turn_on
     target:
       entity_id: script.{{ service_id }}
     data:
       variables:
-        rgb_color: >-
-          {% set h_dec = h/360 %} {% set s_dec = s/100 %}  {% set l_dec = l/100
-          %} {% if l_dec < 0.5 %} 
-            {% set temp1 = l_dec * (s_dec + 1) %} 
-          {% elif l_dec >= 0.5 %}
-            {% set temp1 = l_dec + s_dec - (l_dec * s_dec) %}
-          {% endif %} {% set temp2 = (2 * l_dec) - temp1 %} {% if h_dec + 0.333
-          > 1%}
-            {% set r_temp = h_dec - 0.667 %}
-          {% else %}
-            {% set r_temp = h_dec + 0.333 %}
-          {% endif %}
-            {% set g_temp = h_dec %}
-          {% if h_dec - 0.333 < 0 %}
-            {% set b_temp = h_dec + 0.667 %}
-          {% else %}
-            {% set b_temp = h_dec - 0.333 %}
-          {% endif %} {% if s == 0 %} 
-            {% set r = (l_dec*255) | round(0) %}
-            {% set g = (l_dec*255) | round(0) %}
-            {% set b = (l_dec*255) | round(0) %} 
-          {% else %}
-            {% if r_temp * 6 < 1 %}
-              {% set r = ((temp2 + (temp1 - temp2) * 6 * r_temp) * 255) | round(0) %}
-            {% elif r_temp * 2 < 1 %}
-              {% set r = (temp1 * 255) | round(0) %}
-            {% elif r_temp * 3 < 2 %}
-              {% set r = ((temp2 + (temp1 - temp2) * (0.666 * r_temp) * 6) * 255) | round(0) %}
-            {% else %} 
-              {% set r = (temp2 * 255) | round(0) %} 
-            {% endif %} 
-
-            {% if g_temp * 6 < 1 %}
-              {% set g = ((temp2 + (temp1 - temp2) * 6 * g_temp) * 255) | round(0) %}
-            {% elif g_temp * 2 < 1 %}
-              {% set g = (temp1 * 255) | round(0) %}
-            {% elif g_temp * 3 < 2 %}
-              {% set g = ((temp2 + (temp1 - temp2) * (0.666 * g_temp) * 6) * 255) | round(0) %} 
-            {% else %}
-              {% set g = (temp2 * 255) | round(0) %}
-            {% endif %}
-
-            {% if b_temp * 6 < 1 %} 
-              {% set b = ((temp2 + (temp1 - temp2) * 6 * b_temp) * 255) | round(0) %}
-            {% elif b_temp * 2 < 1 %}
-              {% set b = (temp1 * 255) | round(0) %}
-            {% elif b_temp * 3 < 2 %} 
-              {% set b = ((temp2 + (temp1 - temp2) * (0.666 * b_temp) * 6) * 255) | round(0) %}
-            {% else %}
-              {% set b = (temp2 * 255) | round(0) %} 
-            {% endif %}
-          {% endif %}    {{ r }},{{ g }},{{ b }}
-mode: single
-icon: mdi:palette
-alias: RGB to HS
-sequence:
-  - service: input_text.set_value
-    target:
-      entity_id: input_text.{{inputName}}
+        rgb_color: "{% set h_dec = h/360 %} {% set s_dec = s/100 %}  {% set l_dec
+          = l/100 %} {% if l_dec < 0.5 %} \n  {% set temp1 = l_dec * (s_dec + 1) %}
+          \n{% elif l_dec >= 0.5 %}\n  {% set temp1 = l_dec + s_dec - (l_dec * s_dec)
+          %}\n{% endif %} {% set temp2 = (2 * l_dec) - temp1 %} {% if h_dec + 0.333
+          > 1%}\n  {% set r_temp = h_dec - 0.667 %}\n{% else %}\n  {% set r_temp =
+          h_dec + 0.333 %}\n{% endif %}\n  {% set g_temp = h_dec %}\n{% if h_dec -
+          0.333 < 0 %}\n  {% set b_temp = h_dec + 0.667 %}\n{% else %}\n  {% set b_temp
+          = h_dec - 0.333 %}\n{% endif %} {% if s == 0 %} \n  {% set r = (l_dec*255)
+          | int %}\n  {% set g = (l_dec*255) | int %}\n  {% set b = (l_dec*255) |
+          int %} \n{% else %}\n  {% if r_temp * 6 < 1 %}\n    {% set r = ((temp2 +
+          (temp1 - temp2) * 6 * r_temp) * 255) | int %}\n  {% elif r_temp * 2 < 1
+          %}\n    {% set r = (temp1 * 255) | round(0) %}\n  {% elif r_temp * 3 < 2
+          %}\n    {% set r = ((temp2 + (temp1 - temp2) * (0.666 * r_temp) * 6) * 255)
+          | int %}\n  {% else %} \n    {% set r = (temp2 * 255) | int %} \n  {% endif
+          %} \n\n  {% if g_temp * 6 < 1 %}\n    {% set g = ((temp2 + (temp1 - temp2)
+          * 6 * g_temp) * 255) | int %}\n  {% elif g_temp * 2 < 1 %}\n    {% set g
+          = (temp1 * 255) | int %}\n  {% elif g_temp * 3 < 2 %}\n    {% set g = ((temp2
+          + (temp1 - temp2) * (0.666 * g_temp) * 6) * 255) | int %} \n  {% else %}\n
+          \   {% set g = (temp2 * 255) | int %}\n  {% endif %}\n\n  {% if b_temp *
+          6 < 1 %} \n    {% set b = ((temp2 + (temp1 - temp2) * 6 * b_temp) * 255)
+          | int %}\n  {% elif b_temp * 2 < 1 %}\n    {% set b = (temp1 * 255) | int
+          %}\n  {% elif b_temp * 3 < 2 %} \n    {% set b = ((temp2 + (temp1 - temp2)
+          * (0.666 * b_temp) * 6) * 255) | int %}\n  {% else %}\n    {% set b = (temp2
+          * 255) | int %} \n  {% endif %}\n{% endif %}{{ r }},{{ g }},{{ b }}"
+  mode: single
+  icon: mdi:palette
+bedroom_strip_set_color:
+  alias: Bedroom - Strip - Set Color
+  sequence:
+  - service: rest_command.switchbot_device_command
     data:
-      value: |-
-        {% set r_dec = (r | int)/255 %}
-        {% set g_dec = (g | int)/255 %} 
-        {% set b_dec = (b | int)/255 %}
-        {% set rgb_decimal = r_dec,g_dec,b_dec %}
-
-        {% set maxc = rgb_decimal | max %} 
-        {% set minc = rgb_decimal | min %} 
-        {% set l_dec = (maxc + minc) / 2 %} 
-        {% set l = (l_dec * 100) | int %}
-
-        {% if maxc == minc %}  
-          {% set s_dec = 0 %}
-        {% elif l_dec <= 0.5 %}
-          {% set s_dec = (maxc - minc) / (maxc + minc + 0.001) %}
-        {% else %}
-          {% set s_dec = (maxc - minc) / (2.0 - maxc - minc) %}
-        {% endif %}
-
-        {% set s = (s_dec * 100) | int %} 
-        {% if r_dec == maxc %}
-          {% set h_deg = ((g_dec - b_dec) / (maxc - minc + 0.001)) * 60 %}
-        {% elif g_dec == maxc %}
-          {% set h_deg = ((2.0 + (b_dec - r_dec)) / (maxc - minc + 0.001)) * 60 %}
-        {% else %}
-          {% set h_deg = ((4.0 + (r_dec - g_dec)) / (maxc - minc + 0.001)) * 60 %}
-        {% endif %}
-
-        {% if h_deg < 0 %}
-          {% set h = h_deg + 360 %}
-        {% elif h_deg > 360 %}
-          {% set h = h_deg - 360 %}
-        {% else %}
-          {% set h = h_deg %}
-        {% endif %}
-
-        {{ h | round(0)}},{{ s | round(0)}},{{ l | round(0) }}
-mode: single
-icon: mdi:palette
+      deviceId: A0764E36C0E2
+      command: setColor
+      parameter: '{{rgb_color[0]}}:{{rgb_color[1]}}:{{rgb_color[2]}}'
+      commandType: command
+  mode: single
+  icon: mdi:palette
+waterer_config_publish:
+  alias: Waterer - Config Publish
+  sequence:
+  - service: mqtt.publish
+    data:
+      topic: waterer/config
+      payload_template: "{\n  \"calibrate\": \"True\",\n  \"settings\": {\n    \"min_moisture\":
+        {{ states('input_number.waterer_min_moisture') | int(default=48200) }},\n
+        \   \"max_moisture\": {{ states('input_number.waterer_max_moisture_moisture')
+        | int(default=18000) }},\n    \"message_interval\": {{ states('input_number.waterer_message_interval')
+        | int(default=3600) }},\n    \"max_threshold\": {{ states('input_number.waterer_max_threshold')
+        | int(default=80) }},\n    \"min_threshold\": {{ states('input_number.waterer_min_threshold')
+        | int(default=10) }},\n    \"max_water_cycles\": {{ states('input_number.waterer_max_water_cycles')
+        | int(default=4) }},\n    \"pump_on_time\": {{ states('input_number.waterer_pump_on_time')
+        | int(default=2) }},\n    \"pump_interval\": {{ states('input_number.waterer_pump_interval')
+        | int(default=10) }},\n    \"reboot_days\": {{ states('input_number.waterer_reboot_days')
+        | int(default=1) }}\n  }\n}"
+  mode: single
+pet_feeder_feed:
+  alias: Pet Feeder - Feed
+  sequence:
+  - service: localtuya.set_dp
+    data:
+      device_id: bfbaaae177bd6df76bttgt
+      dp: 3
+      value: '{{ states(''input_number.pet_feeder_portion'') }}'
+  mode: single
+  icon: mdi:bowl-mix
+bed_time:
+  alias: Bed Time
+  sequence:
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: light.all_lights
+  mode: single
+  icon: mdi:sleep
