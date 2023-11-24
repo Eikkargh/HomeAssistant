@@ -46,7 +46,7 @@ I recommend checking it out for the many other things this API can do not mentio
   <pre><code>
 sensor:
   ##Other sensors##
-  #   Tuya Pet Feeder Record sensor
+  # Tuya Pet Feeder Record sensor
   - platform: command_line
     name: 'Pet Feeder - Record'
     unique_id: tuya_pet_record
