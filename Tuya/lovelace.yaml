@@ -1,0 +1,112 @@
+type: vertical-stack
+cards:
+  - type: entities
+    entities:
+      - entity: number.pet_feeder_voice_repeats
+        name: Voice Repeats
+        icon: mdi:account-tie-voice
+      - entity: switch.pet_feeder_slow_feed
+        name: Slow Feed
+        icon: mdi:speedometer-slow
+      - entity: switch.pet_feeder_24_hour_clock
+        name: 24 Hour Clock
+        icon: mdi:hours-24
+      - entity: input_number.pet_feeder_first_feed
+        name: First Feed
+        icon: mdi:calendar
+      - entity: input_number.pet_feeder_last_feed
+        name: Last Feed
+        icon: mdi:calendar
+      - entity: sensor.pet_feeder_active_time
+        name: Active Time
+        icon: mdi:calendar
+      - entity: sensor.pet_feeder_feed_total
+        name: Feeds Recorded
+        icon: mdi:bowl-mix
+      - entity: sensor.pet_feeder_feeds_due
+        name: Feeds Due
+        icon: mdi:bowl-mix-outline
+      - entity: sensor.pet_feeder_feed_status
+        name: Feed Status
+        icon: mdi:bowl-outline
+        style: |
+          :host { 
+            --paper-item-icon-color: {{
+              '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else 
+              '#FF0000' if states('sensor.pet_feeder_feed_status') == "Ahead" else 
+              '#0000FF' }};
+          }
+      - entity: sensor.pet_feeder_error_text
+        name: Error
+        icon: mdi:alert-circle
+        style: |
+          :host { 
+            --paper-item-icon-color: {{
+              '#00FF00' if states('sensor.pet_feeder_error_text') == "No Errors" else 
+              '#FF0000' if states('sensor.pet_feeder_error_text') == "Low Food" else 
+              '#7701FE' }};
+          }
+      - entity: sensor.pet_feeder_battery
+        name: Battery Status
+        style: |
+          :host { 
+            --paper-item-icon-color: {{
+              '#FF0000' if states('sensor.pet_feeder_battery_status') == "empty" else
+              '#00FF00' if states('sensor.pet_feeder_battery_status') == "full" else
+              '#CC6600' }};
+          }
+    title: Pet Feeder
+    show_header_toggle: false
+    style: |
+      ha-card {
+        border-radius: 30px;
+      }
+      #states > div {
+        margin: 0px 0px !important;
+      }
+      .card-header {
+        padding: 5px 16px 10px 16px;
+        justify-content: center !important;
+      }
+  - type: entities
+    entities:
+      - entity: input_number.pet_feeder_portion
+        name: Portion Size
+      - entity: input_number.pet_feeder_feeds_day
+        name: Feeds / Day
+    style: |
+      ha-card {
+        border-radius: 30px;
+      }
+      #states > div {
+        margin: 0px 0px !important;
+      }
+  - show_name: true
+    show_icon: true
+    type: button
+    tap_action:
+      action: call-service
+      service: script.pet_feeder_feed
+      data: {}
+      target: {}
+    entity: input_button.pet_feeder_feed
+    name: Feed
+    icon_height: 40px
+    hold_action:
+      action: none
+    style: |
+      :host { 
+        --paper-item-icon-color:{{
+              '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else 
+              '#FF0000' if states('sensor.pet_feeder_feed_status') == "Ahead" else 
+              '#0000FF' }};
+      }
+      ha-card {
+      margin: 0px 40px 0px 40px;
+      border-radius: 100px;
+      border-style: solid;
+      border-color:{{
+              '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else 
+              '#FF0000' if states('sensor.pet_feeder_feed_status') == "Ahead" else 
+              '#0000FF' }}; 
+      }
