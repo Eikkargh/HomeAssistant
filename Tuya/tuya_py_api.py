@@ -3,9 +3,9 @@ import json
 from datetime import datetime
 
 deviceID = "<DEVICE_ID>"
-Region = "<REGION_LETTERS>"
-Key = "<CLIENT_ID>"
-Secret = "<API_SECRET>"
+region = "<REGION_LETTERS>"
+key = "<CLIENT_ID>"
+secret = "<API_SECRET>"
 
 dt = datetime.now()
 nowTime = int(datetime.timestamp(dt) * 1000)
@@ -20,9 +20,9 @@ pFlag = True
 
 def getCloud(xdeviceID,xstart,xend):
     c = tinytuya.Cloud(
-        apiRegion=Region, 
-        apiKey=Key, 
-        apiSecret=Secret, 
+        apiRegion=region, 
+        apiKey=key, 
+        apiSecret=secret, 
         apiDeviceID=xdeviceID)
     r = c.getdevicelog(
         deviceid=xdeviceID,
