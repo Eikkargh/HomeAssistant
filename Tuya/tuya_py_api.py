@@ -3,9 +3,9 @@ import json
 from datetime import datetime
 
 deviceID = "<DEVICE_ID>"
-Region="<REGION_LETTERS>"
-Key="<CLIENT_ID>"
-Secret="<API_SECRET>"
+Region = "<REGION_LETTERS>"
+Key = "<CLIENT_ID>"
+Secret = "<API_SECRET>"
 
 dt = datetime.now()
 nowTime = int(datetime.timestamp(dt) * 1000)
