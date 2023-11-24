@@ -24,11 +24,20 @@ I recommend checking it out for the many other things this API can do not mentio
   <li>Add the script <a href=./tuya_py_api.py>tuya_py_api.py</a> to your /config/pyscript folder.</li>
   <li>Update the script variables with values from your Tuya Cloud API account.<br>
     <pre><code>
-      deviceID = "DEVICE_ID"
-      region = "REGION_LETTERS" #(cn, us, us-e, eu, eu-w, or in) depending on what you picked during 1.
-      key = "CLIENT_ID"
-      secret = "API_SECRET"
+      deviceID = "DEVICE_ID"     # either from Tuya cloud or tinytuya scan.
+      region = "REGION_LETTERS"  # (cn, us, us-e, eu, eu-w, or in) depending on what you picked during 1.
+      key = "CLIENT_ID"          # from Tuya Cloud Authorisation
+      secret = "API_SECRET"      # from Tuya Cloud Authorisation
     </code></pre></li>
+    <li>The script produces a JSON output:<br>
+    <pre><code>
+ {
+  "records": 3,             #number of times the pet feeder has been triggered
+  "date": 1700784000,       #Unix timestamp of the record date
+  "lastTime": 1700831203    #Unix timestamp of last feed
+}
+    </code></pre>
+    </li>
 </ul>
 <h2>4. configuration.yaml</h2>
 <ul>
@@ -52,7 +61,7 @@ sensor:
   </code></pre></li>
   <li>The code under <code>template:</code> shows examples of sensors that can be used in your lovelace dashboard </li>  
 </ul>
-<h2>lovelace.yaml</h2>
+<h2>5. lovelace.yaml</h2>
 More example code but this time for the dashboard itself resulting. <br>
 This example uses sensors from the official <a href=https://www.home-assistant.io/integrations/tuya/>Tuya Integration</a>.<br>
 <img src=./pet_feeder.jpg>
