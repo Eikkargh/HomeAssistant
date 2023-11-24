@@ -4,7 +4,7 @@ import json
 import time
 
 #variables
-hostname = '192.168.1.24'
+hostname = '<ENTER_MACHINE_IP>'
 url = 'http://' + hostname + '/http-read.json?encrypted=1'
 key = '<ENTER_YOUR_KEY>'
 request_timeout = 10
