@@ -146,6 +146,37 @@
   - service: mqtt.publish
     data:
       topic: ewpe-smart/502cc6677159/set
-      payload_template: >-
-        {% set Hum = ((states('input_number.ewpe_dehumidifier_set_humidity')|int)-30)/5+3 | int %}{"Dwet":{{Hum|int}}}
+      payload_template: '{% set Hum = ((states(''input_number.ewpe_dehumidifier_set_humidity'')|int)-30)/5+3
+        | int %}{"Dwet":{{Hum|int}}}'
   mode: restart
+- id: '1690488157784'
+  alias: Humidifier Auto On
+  description: ''
+  trigger:
+  - platform: time
+    at: 09:00:00
+  condition:
+  - condition: state
+    entity_id: switch.ewpe_dehumidifier_power
+    state: 'off'
+  action:
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.ewpe_dehumidifier_power
+  mode: single
+- id: '1692621131421'
+  alias: Pet Feed - Update Last Portion
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.pet_feeder_last_portions
+  condition: []
+  action:
+  - service: input_number.set_value
+    data:
+      value: '{{ states(''sensor.pet_feeder_last_portions'') }}'
+    target:
+      entity_id: input_number.pet_feeder_portion
+  mode: single

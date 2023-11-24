@@ -1,0 +1,73 @@
+sensor:
+  ##Other sensors##
+  #   Tuya Pet Feeder Record sensor
+  - platform: command_line
+    name: 'Pet Feeder - Record'
+    unique_id: tuya_pet_record
+    scan_interval: 300
+    command_timeout: 30
+    command: python3 ./pyscript/tuya_py_api.py
+    value_template: '{{ value_json }}'
+    json_attributes:
+      - records
+      - date
+      - lastTime
+
+template:
+  ##Other templates##
+  # Pet Feeder
+  - sensor:
+    - name: "Pet Feeder - Feed Total"
+      unique_id: pet_feeder_feed_total
+      icon: mdi:bowl-mix
+      state: "{{ state_attr('sensor.pet_feeder_record', 'records') | int(default=0) }}"
+    - name: "Pet Feeder - Record Date Unix"
+      unique_id: pet_feeder_record_date_unix
+      state: "{{ state_attr('sensor.pet_feeder_record', 'date') }}"
+    - name: "Pet Feeder - Record Date"
+      unique_id: pet_feeder_record_date
+      state: "{{ state_attr('sensor.pet_feeder_record', 'date') | timestamp_custom('%d-%m-%Y') }}"
+    - name: "Pet Feeder - Last Feed Unix"
+      unique_id: pet_feeder_last_feed_unix
+      state: "{{ state_attr('sensor.pet_feeder_record', 'lastTime') }}"
+    - name: Pet Feeder - Last Feed
+      unique_id: pet_feeder_last_feed
+      state: "{{ state_attr('sensor.pet_feeder_record', 'lastTime') | timestamp_custom('%H:%M') }}"
+    - name: "Pet Feeder - Active Time"
+      unique_id: pet_feeder_active_time
+      icon: mdi:calendar
+      state: "{{ (states('input_number.pet_feeder_last_feed')|float) - (states('input_number.pet_feeder_first_feed')|float) }}"
+    - name: "Pet Feeder - Feeds Due"
+      unique_id: pet_feeder_feeds_due
+      icon: mdi:bowl-mix-outline
+      state: >
+        {% set now = as_timestamp(now()) | int %}
+        {% set today =  as_timestamp(states('sensor.date')) | int %}
+        {% set firstFeed = today + states('input_number.pet_feeder_first_feed') | int * 3600 %}
+        {% set lastFeed = today + states('input_number.pet_feeder_last_feed') | int * 3600 %}
+        {% set activeTime = states('sensor.pet_feeder_active_time') | float %}
+        {% set feedInterval = (activeTime / (states('input_number.pet_feeder_feeds_day') | int - 1) *60*60) %}
+        {% if now < firstFeed %}0
+        {% elif now > lastFeed %}{{ states('input_number.pet_feeder_feeds_day') | int }}
+        {% else %}{{ (((now - firstFeed) | float) / (feedInterval | float)) | int + 1 }}
+        {% endif %}
+    - name: "Pet Feeder - Feed Status"
+      unique_id: pet_feeder_feed_status
+      icon: mdi:cookie-clock
+      state: >
+        {% set now = as_timestamp(now()) | int %}
+        {% set today =  as_timestamp(states('sensor.date')) | int %}
+        {% set firstFeed = today + states('input_number.pet_feeder_first_feed') | int * 3600 %}
+        {% set lastFeed = today + states('input_number.pet_feeder_last_feed') | int * 3600 %}
+        {% set activeTime = states('sensor.pet_feeder_active_time') | float %}
+        {% set feedInterval = (activeTime / (states('input_number.pet_feeder_feeds_day') | int - 1) *60*60) %}
+        {% set feedsDone = states('sensor.pet_feeder_feed_total') | int %}
+        {% set feedsDue = states('sensor.pet_feeder_feeds_due') | int %}      
+        {% set nextScheduled = firstFeed + feedsDue * feedInterval %}        
+        {% if (nextScheduled - now) / 3600 > 1 %}{% set timeUntilFeed = '%0.0f hrs' % (((nextScheduled - now) / 3600) | int) %}
+        {% else %}{% set timeUntilFeed = '%d mins' % ((nextScheduled - now) / 60) %}
+        {% endif %}
+        {% if feedsDue > feedsDone %}Feed Due
+        {% elif feedsDue == feedsDone %}{{ "In " + timeUntilFeed }}
+        {% else %}Ahead
+        {% endif %}
