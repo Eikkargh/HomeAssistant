@@ -1,14 +1,15 @@
+command_line:
 #   Get switchbot Strip Light sensors
-  - platform: command_line
-    name: 'Bedroom - Strip Light'
-    scan_interval: 30
-    command_timeout: 30
-    command: !secret SwitchbotLightCmd
-    value_template: '{{ value_json }}'
-    json_attributes:
-      - power
-      - brightness
-      - color
+  - sensor:
+      name: 'Bedroom - Strip Light'
+      scan_interval: 30
+      command_timeout: 30
+      command: !secret SwitchbotLightCmd
+      value_template: '{{ value_json }}'
+      json_attributes:
+        - power
+        - brightness
+        - color
 
 #Switchbot post command
 rest_command:
