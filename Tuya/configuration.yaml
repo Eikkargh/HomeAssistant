@@ -1,17 +1,17 @@
-sensor:
+command_line:
   ##Other sensors##
   #   Tuya Pet Feeder Record sensor
-  - platform: command_line
-    name: 'Pet Feeder - Record'
-    unique_id: tuya_pet_record
-    scan_interval: 300
-    command_timeout: 30
-    command: python3 ./pyscript/tuya_py_api.py
-    value_template: '{{ value_json }}'
-    json_attributes:
-      - records
-      - date
-      - lastTime
+  - sensor:
+      name: 'Pet Feeder - Record'
+      unique_id: tuya_pet_record
+      scan_interval: 300
+      command_timeout: 30
+      command: python3 ./pyscript/tuya_py_api.py
+      value_template: '{{ value_json }}'
+      json_attributes:
+        - records
+        - date
+        - lastTime
 
 template:
   ##Other templates##
