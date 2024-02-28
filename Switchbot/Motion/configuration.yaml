@@ -1,14 +1,14 @@
 # Switchbot Motion Get JSON
-sensor: 
-  - platform: command_line
-    name: 'Dining Motion'
-    scan_interval: 60
-    command_timeout: 30
-    command: !secret SwitchbotMotionCmd
-    value_template: '{{ value_json }}'
-    json_attributes:
-      - moveDetected
-      - brightness
+command_line: 
+  - sensor:
+      name: 'Dining Motion'
+      scan_interval: 60
+      command_timeout: 30
+      command: !secret SwitchbotMotionCmd
+      value_template: '{{ value_json }}'
+      json_attributes:
+        - moveDetected
+        - brightness
 
 # Switchbot Motion Template
 Template:
