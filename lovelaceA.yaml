@@ -2,9 +2,8 @@ title: Home
 views:
   - theme: Backend-selected
     title: HOME
-    path: home2
+    path: home
     type: panel
-    badges: []
     cards:
       - type: horizontal-stack
         cards:
@@ -12,7 +11,7 @@ views:
             cards:
               - type: entities
                 entities:
-                  - entity: light.lumiman_smart_bulb
+                  - entity: light.kid_light
                     name: Main Light
                   - entity: light.kid_strip_light
                     name: LED lights
@@ -25,6 +24,104 @@ views:
                     }
                     #states > div {
                       margin: 0px 0px !important;
+                    }
+              - type: entities
+                entities:
+                  - entity: light.back_door_light
+                  - entity: light.stairs_light
+                    name: Stairs - Light
+                  - entity: light.aromatherapy_machine
+                    name: Mist Machine Light
+                  - entity: sensor.pet_feeder_feed_status
+                    name: Pet Feed Status
+                    card_mod:
+                      style: |
+                        :host {
+                          --paper-item-icon-color: {{
+                            '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else 
+                            '#FF0000' if states('sensor.pet_feeder_feed_status').split(':')[0] == "Ahead" else 
+                            '#0000FF' }};
+                        }
+                  - entity: input_button.pet_feeder_feed
+                    show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: call-service
+                      service: script.pet_feeder_feed
+                      data: {}
+                      target: {}
+                    name: Feed
+                    card_mod:
+                      style: |
+                        :host {
+                          --paper-item-icon-color: {{
+                            '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else 
+                            '#FF0000' if states('sensor.pet_feeder_feed_status').split(':')[0] == "Ahead" else 
+                            '#0000FF' }};
+                        }
+                title: Kitchen/Dinning Room
+                state_color: true
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 30px;
+                    }
+                    #states > div {
+                      margin: 0px 0px !important;
+                    }
+              - show_name: false
+                show_icon: true
+                show_state: true
+                type: glance
+                entities:
+                  - entity: binary_sensor.dining_room_motion
+                    name: Dining Motion - Detect
+                    card_mod:
+                      style: |
+                        :host { 
+                        --paper-item-icon-color: {{ 
+                          '#A12A23' if is_state('sensor.dining_motion_detected', 'True') else 
+                          '#4287F5'}}; 
+                        }
+                  - entity: binary_sensor.dining_room_light_sensor
+                    name: Dining Motion - Brightness
+                    card_mod:
+                      style: |
+                        :host { 
+                        --paper-item-icon-color: {{ 
+                          '#4287f5' if is_state('sensor.dining_motion_brightness', 'dim') else 
+                          '#D9A338'}}; 
+                        }
+                  - entity: sensor.dining_room_motion_sensor_battery
+                    name: Dining Motion - Battery
+                    card_mod:
+                      style: |
+                        :host {
+                          --paper-item-icon-color: {{
+                            '#00FF00' if states('sensor.dining_room_motion_sensor_battery') | float > 75 else
+                            '#FF8F07' if states('sensor.dining_room_motion_sensor_battery') | float > 25 else
+                            '#FF0000' }}; 
+                          padding: 0  16px 0;
+                        }
+                        state-badge {
+                          padding: 0px !important;
+                        }
+                  - entity: humidifier.aromatherapy_machine
+                card_mod:
+                  style: |
+                    :host {
+                      --mdc-icon-size: 25px;
+                      line-height: 25px;  
+                    }
+                    ha-card {
+                      border-radius: 50px;
+                    }
+                    div.entities.no-header {
+                      padding: 0 !important;
+                    }
+                    .entity {
+                      margin-bottom: 5px !important;
                     }
               - type: vertical-stack
                 cards:
@@ -204,104 +301,6 @@ views:
                         .entity {
                           margin-bottom: 5px !important;
                         }
-              - type: entities
-                entities:
-                  - entity: light.back_door_light
-                  - entity: light.stairs_light
-                    name: Stairs - Light
-                  - entity: light.aromatherapy_machine
-                    name: Mist Machine Light
-                  - entity: sensor.pet_feeder_feed_status
-                    name: Pet Feed Status
-                    card_mod:
-                      style: |
-                        :host {
-                          --paper-item-icon-color: {{
-                            '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else 
-                            '#FF0000' if states('sensor.pet_feeder_feed_status').split(':')[0] == "Ahead" else 
-                            '#0000FF' }};
-                        }
-                  - entity: input_button.pet_feeder_feed
-                    show_name: true
-                    show_icon: true
-                    type: button
-                    tap_action:
-                      action: call-service
-                      service: script.pet_feeder_feed
-                      data: {}
-                      target: {}
-                    name: Feed
-                    card_mod:
-                      style: |
-                        :host {
-                          --paper-item-icon-color: {{
-                            '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else 
-                            '#FF0000' if states('sensor.pet_feeder_feed_status').split(':')[0] == "Ahead" else 
-                            '#0000FF' }};
-                        }
-                title: Kitchen/Dinning Room
-                state_color: true
-                card_mod:
-                  style: |
-                    ha-card {
-                      border-radius: 30px;
-                    }
-                    #states > div {
-                      margin: 0px 0px !important;
-                    }
-              - show_name: false
-                show_icon: true
-                show_state: true
-                type: glance
-                entities:
-                  - entity: sensor.dining_motion_detected
-                    name: Dining Motion - Detect
-                    card_mod:
-                      style: |
-                        :host { 
-                        --paper-item-icon-color: {{ 
-                          '#A12A23' if is_state('sensor.dining_motion_detected', 'True') else 
-                          '#4287F5'}}; 
-                        }
-                  - entity: sensor.dining_motion_brightness
-                    name: Dining Motion - Brightness
-                    card_mod:
-                      style: |
-                        :host { 
-                        --paper-item-icon-color: {{ 
-                          '#4287f5' if is_state('sensor.dining_motion_brightness', 'dim') else 
-                          '#D9A338'}}; 
-                        }
-                  - entity: sensor.motion_sensor_bc9d_battery
-                    name: Dining Motion - Battery
-                    card_mod:
-                      style: |
-                        :host {
-                          --paper-item-icon-color: {{
-                            '#00FF00' if states('sensor.motion_sensor_bc9d_battery') | float > 75 else
-                            '#FF8F07' if states('sensor.motion_sensor_bc9d_battery') | float > 25 else
-                            '#FF0000' }}; 
-                          padding: 0  16px 0;
-                        }
-                        state-badge {
-                          padding: 0px !important;
-                        }
-                  - entity: humidifier.aromatherapy_machine
-                card_mod:
-                  style: |
-                    :host {
-                      --mdc-icon-size: 25px;
-                      line-height: 25px;  
-                    }
-                    ha-card {
-                      border-radius: 50px;
-                    }
-                    div.entities.no-header {
-                      padding: 0 !important;
-                    }
-                    .entity {
-                      margin-bottom: 5px !important;
-                    }
           - type: vertical-stack
             cards:
               - type: custom:clock-weather-card
@@ -483,10 +482,65 @@ views:
                     #states > div {
                       margin: 0px 0px !important;
                     }
+              - type: custom:mini-media-player
+                entity: media_player.27_smart_monitor_m5
+                name: Bedroom TV
+                card_mod:
+                  style: |
+                    :host {
+                      --mmp-border-radius: 30px !important;
+                    }
+                    ha-card {
+                      border-radius: 30px;
+                      margin: 0px 6px;
+                      --ha-card-header-font-size: 20px;
+                    }
               - show_name: false
                 show_icon: true
                 show_state: true
                 type: glance
+                entities:
+                  - entity: sensor.bedroom_meter_temperature
+                    card_mod:
+                      style: |
+                        :host {
+                          --paper-item-icon-color: {{
+                            '#FF0000' if states('sensor.bedroom_temp') | float > 30 else
+                            '#FF8F07' if states('sensor.bedroom_temp') | float > 25 else
+                            '#FFC407' if states('sensor.bedroom_temp') | float > 20 else 
+                            '#00FF00' if states('sensor.bedroom_temp') | float > 15 else
+                            '#0066FF' if states('sensor.bedroom_temp') | float > 3 else
+                            '#FFFFFF' }}; 
+                          padding: 0  16px 0;
+                        }
+                        state-badge {
+                          padding: 0px !important;
+                        }
+                  - entity: sensor.bedroom_meter_battery
+                    card_mod:
+                      style: |
+                        :host {
+                          --paper-item-icon-color: {{
+                            '#00FF00' if states('sensor.bedroom_sensor_battery') | float > 75 else
+                            '#FF8F07' if states('sensor.bedroom_sensor_battery') | float > 25 else
+                            '#FF0000' }}; 
+                          padding: 0  16px 0;
+                        }
+                        state-badge {
+                          padding: 0px !important;
+                        }
+                  - entity: sensor.bedroom_meter_humidity
+                    card_mod:
+                      style: |
+                        :host { 
+                          --paper-item-icon-color: {{  
+                            '#00FFFF' if states('sensor.bedroom_humidity') | float > 60 else 
+                            '#00FF00' if states('sensor.bedroom_humidity') | float > 30 else 
+                            '#CCCC00' }}; 
+                        }
+                        state-badge {
+                          padding: 0px !important;
+                        }
                 card_mod:
                   style: |
                     :host {
@@ -502,57 +556,15 @@ views:
                     .entity {
                       margin-bottom: 5px !important;
                     }
-                entities:
-                  - entity: sensor.kid_room_temp
-                    card_mod:
-                      style: |
-                        :host {
-                          --paper-item-icon-color: {{
-                            '#FF0000' if states('sensor.kid_room_temp') | float > 30 else
-                            '#FF8F07' if states('sensor.kid_room_temp') | float > 25 else
-                            '#FFC407' if states('sensor.kid_room_temp') | float > 20 else 
-                            '#00FF00' if states('sensor.kid_room_temp') | float > 15 else
-                            '#0066FF' if states('sensor.kid_room_temp') | float > 3 else
-                            '#FFFFFF' }}; 
-                          padding: 0  16px 0;
-                        }
-                        state-badge {
-                          padding: 0px !important;
-                        }
-                  - entity: sensor.meter_0821_battery
-                    card_mod:
-                      style: |
-                        :host {
-                          --paper-item-icon-color: {{
-                            '#00FF00' if states('sensor.meter_0821_battery') | float > 75 else
-                            '#FF8F07' if states('sensor.meter_0821_battery') | float > 25 else
-                            '#FF0000' }}; 
-                          padding: 0  16px 0;
-                        }
-                        state-badge {
-                          padding: 0px !important;
-                        }
-                  - entity: sensor.kid_room_humidity
-                    card_mod:
-                      style: |
-                        :host { 
-                          --paper-item-icon-color: {{  
-                            '#00FFFF' if states('sensor.kid_room_humidity') | float > 60 else 
-                            '#00FF00' if states('sensor.kid_room_humidity') | float > 30 else 
-                            '#CCCC00' }}; 
-                        }
-                        state-badge {
-                          padding: 0px !important;
-                        }
               - type: entities
                 entities:
-                  - entity: light.living_room_book_lamp
+                  - entity: light.living_room_shelf_lamp
                     name: Floor Lamp
-                  - entity: light.living_room_side_light
+                  - entity: light.living_room_side_lamp
                     name: Corner Light
-                  - entity: light.desk_lamp
+                  - entity: light.living_room_floor_lamp
                     name: Shelf Lamp
-                  - entity: light.living_room_galaxy_power
+                  - entity: light.galaxy_light
                     name: Galaxy Light
                   - entity: switch.living_room_fan_heater
                     name: Fan Heater
@@ -598,7 +610,7 @@ views:
                             state-badge {
                               padding: 0px !important;
                             }
-                      - entity: binary_sensor.pir_sensor
+                      - entity: binary_sensor.pir_sensor_motion
                         card_mod:
                           style: |
                             :host {
@@ -719,6 +731,7 @@ views:
                         .entity {
                           margin-bottom: 5px !important;
                         }
+    icon: mdi:home
   - theme: Backend-selected
     type: panel
     icon: mdi:cctv
@@ -753,7 +766,7 @@ views:
                     image: https://demo.home-assistant.io/stub_config/kitchen.png
                     entities:
                       - entity: light.back_door_light
-                    camera_image: camera.back_porch
+                    camera_image: camera.porch_cam_hd_stream
                   - type: horizontal-stack
                     cards:
                       - type: custom:bar-card
@@ -841,13 +854,14 @@ views:
                 cards:
                   - camera_view: live
                     type: picture-glance
-                    title: Front Door
+                    title: Bedroom
                     image: https://demo.home-assistant.io/stub_config/kitchen.png
                     entities:
-                      - entity: switch.side_lamp_socket_1
-                      - entity: light.living_room_book_lamp
-                      - entity: light.living_room_side_light
-                    camera_image: camera.pi_camera
+                      - entity: light.bedroom_lights
+                      - entity: light.bedroom_light
+                      - entity: light.bedroom_strip_light
+                      - entity: light.bedroom_fairy_lights
+                    camera_image: camera.bedroom
   - theme: Backend-selected
     icon: mdi:water-percent
     type: panel
@@ -921,7 +935,7 @@ views:
                     icon: mdi:faucet
                     tap_action:
                       action: call-service
-                      service: script.pet_feeder_feed
+                      service: script.ewpe_dehumidifier_cleaned
                       data: {}
                       target: {}
                     card_mod:
@@ -984,13 +998,13 @@ views:
                 state_color: false
           - type: custom:config-template-card
             variables:
-              - states['sensor.kid_room_humidity'].state
+              - states['sensor.bedroom_meter_humidity'].state
             entities:
-              - sensor.kid_room_humidity
+              - sensor.bedroom_meter_humidity
             card:
               type: custom:mini-graph-card
               entities:
-                - entity: sensor.kid_room_humidity
+                - entity: sensor.bedroom_meter_humidity
                   name: Bedroom - Humidity
               hours_to_show: 168
               points_per_hour: 1
@@ -1015,8 +1029,8 @@ views:
                     margin: 0 10px 0 0;
                     border-radius: 15px;
                     --paper-item-icon-color: {{ 
-                      '#FF0000' if states('sensor.kid_room_humidity') | float() < 40 else 
-                      '#00FF00' if states('sensor.kid_room_humidity') | float() < 60 else 
+                      '#FF0000' if states('sensor.ewpe_dehumidifier_humidity') | float() < 40 else 
+                      '#00FF00' if states('sensor.ewpe_dehumidifier_humidity') | float() < 60 else 
                       '#4444FF' }};
                   }
                   div.header.flex {
@@ -1037,12 +1051,6 @@ views:
         cards:
           - type: entities
             entities:
-              - entity: switch.pet_feeder_slow_feed
-                name: Slow Feed
-                icon: mdi:speedometer-slow
-              - entity: switch.pet_feeder_24_hour_clock
-                name: 24 Hour Clock
-                icon: mdi:hours-24
               - entity: input_number.pet_feeder_first_feed
                 name: First Feed
                 icon: mdi:calendar
@@ -1060,6 +1068,9 @@ views:
               - entity: sensor.pet_feeder_feeds_due
                 name: Feeds Due
                 icon: mdi:bowl-mix-outline
+              - entity: sensor.pet_feeder_last_feed
+                name: Time of Last Feed
+                icon: mdi:bowl-outline
               - entity: sensor.pet_feeder_feed_status
                 name: Feed Status
                 icon: mdi:bowl-outline
@@ -1088,9 +1099,10 @@ views:
                   style: |
                     :host { 
                       --paper-item-icon-color: {{
-                        '#FF0000' if states('sensor.pet_feeder_battery_status') == "empty" else
-                        '#00FF00' if states('sensor.pet_feeder_battery_status') == "full" else
-                        '#CC6600' }};
+                        '#FF0000' if states('sensor.pet_feeder_battery_status') == "Empty" else
+                        '#00FF00' if states('sensor.pet_feeder_battery_status') == "Full" else
+                        '#CC6600' if states('sensor.pet_feeder_battery_status') == "Low" else
+                        '#66CC00' }};
                     }
             title: Pet Feeder
             show_header_toggle: false
@@ -1148,6 +1160,161 @@ views:
                         '#FF0000' if states('sensor.pet_feeder_feed_status') == "Ahead" else 
                         '#0000FF' }}; 
                 }
+      - type: vertical-stack
+        cards:
+          - type: entities
+            entities: []
+            title: Meal Plan
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 30px;
+                }
+                #states > div {
+                  margin: 0px 0px !important;
+                }
+                .card-header {
+                  padding: 5px 16px 0px 16px;
+                  justify-content: center !important;
+                }
+          - show_name: false
+            show_icon: false
+            show_state: true
+            type: glance
+            entities:
+              - entity: sensor.slot_1
+              - entity: sensor.pet_feeder_meal_plan_slot_1_power
+              - entity: sensor.pet_feeder_meal_plan_slot_1_portions
+              - entity: sensor.pet_feeder_meal_plan_slot_1_time
+              - entity: sensor.slot_2
+              - entity: sensor.pet_feeder_meal_plan_slot_2_power
+              - entity: sensor.pet_feeder_meal_plan_slot_2_portions
+              - entity: sensor.pet_feeder_meal_plan_slot_2_time
+              - entity: sensor.slot_3
+              - entity: sensor.pet_feeder_meal_plan_slot_3_power
+              - entity: sensor.pet_feeder_meal_plan_slot_3_portions
+              - entity: sensor.pet_feeder_meal_plan_slot_3_time
+              - entity: sensor.slot_4
+              - entity: sensor.pet_feeder_meal_plan_slot_4_power
+              - entity: sensor.pet_feeder_meal_plan_slot_4_portions
+              - entity: sensor.pet_feeder_meal_plan_slot_4_time
+              - entity: sensor.slot_5
+              - entity: sensor.pet_feeder_meal_plan_slot_5_power
+              - entity: sensor.pet_feeder_meal_plan_slot_5_portions
+              - entity: sensor.pet_feeder_meal_plan_slot_5_time
+              - entity: sensor.slot_6
+              - entity: sensor.pet_feeder_meal_plan_slot_6_power
+              - entity: sensor.pet_feeder_meal_plan_slot_6_portions
+              - entity: sensor.pet_feeder_meal_plan_slot_6_time
+            columns: 4
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 30px;
+                }
+                #states > div {
+                  margin: 0px 0px !important;
+                }
+          - type: horizontal-stack
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: call-service
+                  service: script.pet_feeder_update_plan
+                entity: script.pet_feeder_update_plan
+                name: Reset New Plan
+                card_mod:
+                  style: |
+                    :host { 
+                      --paper-item-icon-color:{{
+                            '#00FF00' if states('sensor.pet_feeder_meal_plan') == states('sensor.pet_feeder_new_plan') else 
+                            '#CC7700' }};
+                    }
+                    ha-card {
+                    margin: 0px 20px 0px 20px;
+                    border-radius: 100px;
+                    border-style: solid;
+                    border-color:{{
+                            '#00FF00' if states('sensor.pet_feeder_meal_plan') == states('sensor.pet_feeder_new_plan') else 
+                            '#CC7700' }};
+                    }
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: call-service
+                  service: script.pet_feeder_set_meal_plan
+                entity: script.pet_feeder_set_meal_plan
+                name: Set New Plan
+                card_mod:
+                  style: |
+                    :host { 
+                      --paper-item-icon-color:{{
+                            '#CC7700' if states('sensor.pet_feeder_meal_plan') == states('sensor.pet_feeder_new_plan') else 
+                            '#00FF00' }};
+                    }
+                    ha-card {
+                    margin: 0px 20px 0px 20px;
+                    border-radius: 100px;
+                    border-style: solid;
+                    border-color:{{
+                            '#CC7700' if states('sensor.pet_feeder_meal_plan') == states('sensor.pet_feeder_new_plan') else 
+                            '#00FF00' }};
+                    }
+      - type: entities
+        entities:
+          - entity: input_boolean.pet_feeder_slot_1_power
+            name: Slot 1 - Power
+          - entity: input_number.pet_feeder_slot_1_portions
+            name: Slot 1 - Portions
+          - entity: input_text.pet_feeder_slot_1_time
+            name: Slot 1 - Time
+          - entity: input_boolean.pet_feeder_slot_2_power
+            name: Slot 2 - Power
+          - entity: input_number.pet_feeder_slot_2_portions
+            name: Slot 2 - Portions
+          - entity: input_text.pet_feeder_slot_2_time
+            name: Slot 2 - Time
+          - entity: input_boolean.pet_feeder_slot_3_power
+            name: Slot 3 - Power
+          - entity: input_number.pet_feeder_slot_3_portions
+            name: Slot 3 - Portions
+          - entity: input_text.pet_feeder_slot_3_time
+            name: Slot 3 - Time
+          - entity: input_boolean.pet_feeder_slot_4_power
+            name: Slot 4 - Power
+          - entity: input_number.pet_feeder_slot_4_portions
+            name: Slot 4 - Portions
+          - entity: input_text.pet_feeder_slot_4_time
+            name: Slot 4 - Time
+          - entity: input_boolean.pet_feeder_slot_5_power
+            name: Slot 5 - Power
+          - entity: input_number.pet_feeder_slot_5_portions
+            name: Slot 5 - Portions
+          - entity: input_text.pet_feeder_slot_5_time
+            name: Slot 5 - Time
+          - entity: input_boolean.pet_feeder_slot_6_power
+            name: Slot 6 - Power
+          - entity: input_number.pet_feeder_slot_6_portions
+            name: Slot 6 - Portions
+          - entity: input_text.pet_feeder_slot_6_time
+            name: Slot 6 - Time
+        title: New Plan
+        show_header_toggle: false
+        card_mod:
+          style: |
+            ha-card {
+              border-radius: 30px;
+            }
+            #states > div {
+              margin: 0px 0px !important;
+            }
+            .card-header {
+              padding: 5px 16px 10px 16px;
+              justify-content: center !important;
+            }
   - theme: Backend-selected
     icon: mdi:sprout
     type: panel
@@ -1604,12 +1771,279 @@ views:
             #states > div {
               margin: 0px 0px !important;
             }
+  - icon: mdi:walk
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: entities
+            entities: []
+            title: Walk Recorder
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 30px;
+                  margin: 6px 6px 0px;
+                  --ha-card-header-font-size: 40px;
+                }
+                .card-header {
+                  padding: 0px 16px 7px 16px;
+                  justify-content: center !important;
+                  line-height: 2;
+                }
+                .card-content {
+                  padding: 0;
+                }
+          - type: horizontal-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: input_number.walk_number
+                  - entity: input_datetime.walk_date
+                  - entity: input_datetime.walk_start
+                  - entity: input_datetime.walk_end
+                  - entity: sensor.walk_duration
+                  - entity: sensor.walk_money_string
+                  - entity: input_number.walk_total_money
+              - type: vertical-stack
+                cards:
+                  - show_name: true
+                    show_icon: false
+                    show_state: true
+                    type: glance
+                    entities:
+                      - entity: sensor.walk_total_money_string
+                        name: Total Money
+                    card_mod:
+                      style: |
+                        :host { 
+                          font-size: 30px;
+                          line-height: 30px;
+                        }
+                        ha-card {
+                          border-radius: 30px;
+                        }
+                        .entities.no-header {
+                          padding-top: 35px !important;
+                        }
+                  - square: false
+                    type: grid
+                    cards:
+                      - show_name: true
+                        show_icon: true
+                        type: button
+                        tap_action:
+                          action: call-service
+                          service: script.walk_start
+                          target: {}
+                        entity: input_button.walk_start_button
+                        icon: mdi:play
+                        name: Start
+                        card_mod:
+                          style: |
+                            :host { 
+                              --paper-item-icon-color: {{ 
+                                '#03fc1c' if is_state('input_boolean.walk_active','on') else
+                                '#FFFFFF'}}; 
+                            }
+                            ha-card {
+                              border-radius: 30px;
+                            }
+                      - show_name: true
+                        show_icon: true
+                        type: button
+                        tap_action:
+                          action: call-service
+                          service: script.walk_end
+                          target: {}
+                        entity: input_button.walk_end_button
+                        icon: mdi:stop
+                        name: End
+                        card_mod:
+                          style: |
+                            :host { 
+                              --paper-item-icon-color: {{ 
+                                '#fc0303' if is_state('input_boolean.walk_active','on') else
+                                '#000000'}}; 
+                            }
+                            ha-card {
+                              border-radius: 30px;
+                            }
+                    columns: 2
+              - type: logbook
+                entities:
+                  - input_text.walk_final_duration
+                card_mod:
+                  style: |
+                    ha-card {
+                      border-radius: 30px;
+                    }
+    type: panel
   - theme: Backend-selected
     icon: mdi:music
     badges: []
-    cards: []
+    cards:
+      - type: humidifier
+        entity: humidifier.aromatherapy_machine
+        name: Mist
+        show_current_as_primary: false
+        features:
+          - style: icons
+            modes:
+              - small
+              - large
+            type: humidifier-modes
+          - type: humidifier-toggle
+        card_mod:
+          style: |
+            ha-card {
+              --name-font-size: 1rem !important;
+              --mdc-icon-button-size: 30px !important;
+              border-radius: 30px;
+            }
+            #info {
+              padding: 2px 0 5px 0 !important;
+            }
+            #controls {
+              padding: 0 16px 16px !important;
+            }
+            #slider {
+              min-width: 20px !important;
+            }
+            .mdc-icon-button {
+              padding: 16px !important;
+            }
+            ha-icon-button.more-info {
+              display: none !important;
+            }
+            #humidity {
+              height: 100% !important;
+            }
+      - type: vertical-stack
+        cards:
+          - type: custom:mini-media-player
+            entity: media_player.27_smart_monitor_m5
+            card_mod:
+              style: |
+                :host {
+                  --mmp-border-radius: 30px !important;
+                }
+                ha-card {
+                  border-radius: 30px;
+                  margin: 0px 6px;
+                  --ha-card-header-font-size: 20px;
+                }
+          - type: custom:mushroom-media-player-card
+            entity: media_player.27_smart_monitor_m5_2
+            use_media_info: true
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 30px;
+                  margin: 0px 6px;
+                }
   - theme: Backend-selected
     icon: mdi:floor-plan
     type: panel
     badges: []
-    cards: []
+    cards:
+      - type: weather-forecast
+        entity: weather.forecast_home
+        show_forecast: false
+  - title: test
+    path: test
+    cards:
+      - type: custom:bar-card
+        direction: up
+        stack: horizontal
+        height: 200px
+        width: 40px
+        entities:
+          - entity: light.downstairs_lights
+            name: LOWER DECK
+          - entity: light.upstairs_lights
+            name: UPPER DECK
+        positions:
+          name: outside
+          icon: 'off'
+        card_mod:
+          class: middle
+          style: |
+            ha-card {
+              background: none;
+              border: none;
+            }
+            bar-card-card {
+              width: 10px;
+            }
+      - type: custom:my-slider-v2
+        title: Upstairs Lights
+        entity: light.living_room_lights
+        vertical: true
+        allowTapping: false
+        allowSliding: true
+        styles:
+          card:
+            - height: 200px
+              width: 50px
+          track:
+            - background: '#444444'
+          progress:
+            - background: |
+                [[[
+                  if (entity.state == "on") return "lightyellow";
+                ]]]
+          thumb:
+            - background: orange
+        card_mod:
+          class: middle-blank
+      - type: horizontal-stack
+        cards:
+          - type: markdown
+            content: '&nbsp;'
+          - type: custom:my-slider-v2
+            title: Upstairs Lights
+            entity: light.living_room_lights
+            vertical: true
+            allowTapping: false
+            allowSliding: true
+            styles:
+              card:
+                - height: 200px
+              container:
+                - width: 50px
+                  position: relative
+              track:
+                - background: '#444444'
+              progress:
+                - background: |
+                    [[[
+                      if (entity.state == "on") return "lightyellow";
+                    ]]]
+              thumb:
+                - background: orange
+            card_mod:
+              class: middle-blank
+          - type: custom:my-slider-v2
+            title: Upstairs Lights
+            entity: light.living_room_lights
+            mode: light:hue
+            vertical: true
+            allowTapping: false
+            allowSliding: true
+            styles:
+              card:
+                - height: 200px
+                  width: 50px
+              track:
+                - background: '#444444'
+              progress:
+                - background: |
+                    [[[
+                      if (entity.state == "on") return "lightyellow";
+                    ]]]
+              thumb:
+                - background: orange
+            card_mod:
+              class: middle-blank
+          - type: markdown
+            content: '&nbsp;'
