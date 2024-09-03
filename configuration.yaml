@@ -12,6 +12,7 @@ scene: !include scenes.yaml
 bluetooth:
 
 frontend:
+  themes: !include_dir_merge_named themes
   extra_module_url:
     - /local/community/lovelace-card-mod/card-mod.js
       /local/autorefresh.js
@@ -143,6 +144,10 @@ sensor:
       - 'time'
       - 'date'
       - 'date_time'
+      - 'date_time_utc'
+      - 'date_time_iso'
+      - 'time_date'
+      - 'time_utc'
 
 #   Waterer Max/Min
   - platform: statistics
@@ -166,49 +171,20 @@ command_line:
 #   Tuya Pet Feeder Record sensor
   - sensor:
         name: 'Pet Feeder - Record'
-        unique_id: tuya_pet_record
+        unique_id: pet_feeder_record
         scan_interval: 300
         command_timeout: 30
-        command: python3 ./pyscript/tuya_py_api.py
+        command: python3 ./pyscript/tuya_feeder_status.py
         value_template: '{{ value_json }}'
         json_attributes:
             - records
             - date
             - lastTime
+            - meal_plan
+            - manual_feed
+            - fault
+            - battery
       
-#   Get switchbot sensors and lights
-  - sensor:
-        name: 'Kid Room Sensor'
-        unique_id: kid_room_sensor
-        scan_interval: 600
-        command_timeout: 30
-        command: !secret SwitchbotSensorCmd
-        value_template: '{{ value_json }}'
-        json_attributes:
-            - temperature
-            - humidity
-  - sensor:
-        name: 'Dining Motion'
-        unique_id: dining_motion
-        scan_interval: 60
-        command_timeout: 30
-        command: !secret SwitchbotMotionCmd
-        value_template: '{{ value_json }}'
-        json_attributes:
-            - moveDetected
-            - brightness
-  - sensor:
-        name: 'Bedroom - Strip Light'
-        unique_id: bedroom_strip_light
-        scan_interval: 30
-        command_timeout: 30
-        command: !secret SwitchbotLightCmd
-        value_template: '{{ value_json }}'
-        json_attributes:
-            - power
-            - brightness
-            - color
-    
 #Candy washer dryer sensor
   - sensor:
         name: 'Candy Washer Dryer'
@@ -230,104 +206,11 @@ command_line:
             - DelVal
             - TotalTime
 
-#Switchbot post command
-rest_command:
-  switchbot_device_command:
-    url: 'https://api.switch-bot.com/v1.0/devices/{{ deviceId }}/commands'
-    method: post
-    headers:
-      Authorization: !secret SwitchbotAPI
-      Content-Type: 'application/json'
-    payload: '{"command":"{{ command }}","parameter":"{{ parameter }}","commandType":"{{ commandType }}"}'
-
-#Switchbot Light Strip
-light:
-  - platform: template
-    lights:
-      bedroom_strip_light:
-        friendly_name: "Bedroom - Strip Light"
-        unique_id: bedroom_strip_light
-        icon_template: mdi:led-strip-variant
-        level_template: "{{ state_attr('sensor.bedroom_strip_light', 'brightness') | int(default=20) }}"
-        color_template: "{{ states('input_text.bedroom_strip_hs').split(',')[0] | int(default=0)}},{{ states('input_text.bedroom_strip_hs').split(',')[1] | int(default=0)}}"
-        value_template: "{{ state_attr('sensor.bedroom_strip_light', 'power') }}"
-        turn_on:
-          - service: rest_command.switchbot_device_command
-            data:
-              deviceId: !secret SwitchbotLightId
-              command: "turnOn"
-              parameter: "default"
-              commandType: "command"
-          - delay:
-              seconds: 1
-          - service: homeassistant.update_entity
-            entity_id: sensor.bedroom_strip_light
-        turn_off: 
-          - service: rest_command.switchbot_device_command
-            data:
-              deviceId: !secret SwitchbotLightId
-              command: "turnOff"
-              parameter: "default"
-              commandType: "command"
-          - delay:
-              seconds: 1
-          - service: homeassistant.update_entity
-            entity_id: sensor.bedroom_strip_light
-        set_level:
-          - service: rest_command.switchbot_device_command
-            data:
-              deviceId: !secret SwitchbotLightId
-              command: "setBrightness"
-              parameter: "{{brightness}}"
-              commandType: "command"
-          - delay:
-              seconds: 1
-          - service: homeassistant.update_entity
-            entity_id: sensor.bedroom_strip_light
-        set_color:
-          - service: input_text.set_value
-            target:
-              entity_id: input_text.bedroom_strip_hs
-            data:
-              value: "{{ h }},{{ s }},{{ states('input_text.bedroom_strip_hs').split(',')[2] | int(default=100) }}"
-          - service: script.hs_to_rgb
-            data:
-              service_id: bedroom_strip_set_color
-              h: "{{ h }}"
-              s: "{{ s }}"
-              l: "{{ states('input_text.bedroom_strip_hs').split(',')[2] | int(default=100) }}"
-          - delay:
-              seconds: 1
-          - service: homeassistant.update_entity
-            entity_id: sensor.bedroom_strip_light
-
-#switchbot scene commands
 shell_command:
-  living_room_tv_mute: !secret SwitchbotSceneTvMute
-  living_room_tv_exit: !secret SwitchbotSceneTvExit
-  living_room_tv_input: !secret SwitchbotSceneTvInput
-  living_room_tv_up: !secret SwitchbotSceneTvUp
-  living_room_tv_down: !secret SwitchbotSceneTvDown
-  living_room_galaxy_on: !secret SwitchbotSceneGalaxyOn
-  living_room_galaxy_off: !secret SwitchbotSceneGalaxyOff 
-  living_room_galaxy_disco: !secret SwitchbotSceneGalaxyDisco
-  living_room_galaxy_white: !secret SwitchbotSceneGalaxyWhite
-     
-#switchbot scenes TV
+    pet_feeder_feed: python3 ./pyscript/tuya_feeder_send.py feed
+    pet_feeder_plan: python3 ./pyscript/tuya_feeder_send.py {{ states('sensor.pet_feeder_new_plan') }}
+
 switch:
-  - platform: command_line
-    switches:
-      living_room_tv_power:
-        friendly_name: "Living Room - TV Power"
-        unique_id: living_room_tv_power
-        command_on: !secret SwitchbotSceneTvOn
-        command_off: !secret SwitchbotSceneTvOff
-#switchbot galaxy light
-      living_room_galaxy_power:
-        friendly_name: "Living Room - Galaxy Power"
-        unique_id: living_room_galaxy_power
-        command_on: !secret SwitchbotSceneGalaxyOn
-        command_off: !secret SwitchbotSceneGalaxyOff
 #living room fan heater switch
   - platform: template
     switches:
@@ -335,7 +218,7 @@ switch:
         friendly_name: "Living Room - Fan Heater"
         unique_id: living_room_fan_heater
         icon_template: mdi:fan
-        value_template: "{{ is_state('climate.fan_heater', 'on') }}"
+        value_template: "{{ states('climate.fan_heater') }}"
         turn_on:
           service: climate.turn_on
           target:
@@ -423,102 +306,119 @@ switch:
             topic: ewpe-smart/502cc6677159/set
             payload: '{"Lig":0}'
 
-template:
-#switchbot TV buttons
-  - button:
-    - name: "Living Room - TV Mute"
-      unique_id: living_room_tv_mute
-      icon: mdi:volume-mute
-      press:
-        service: shell_command.living_room_tv_mute
-  - button:
-    - name: "Living Room - TV Up"
-      unique_id: living_room_tv_up
-      icon: mdi:volume-plus
-      press:
-        service: shell_command.living_room_tv_up
-  - button:
-    - name: "Living Room - TV Down"
-      unique_id: living_room_tv_down
-      icon: mdi:volume-minus"
-      press:
-        service: shell_command.living_room_tv_down
-  - button:
-    - name: "Living Room - TV Exit"
-      unique_id: living_room_tv_exit
-      icon: mdi:backburger
-      press:
-        service: shell_command.living_room_tv_exit
-  - button:
-    - name: "Living Room - TV Input"
-      unique_id: living_room_tv_input
-      icon: mdi:video-input-hdmi
-      press:
-        service: shell_command.living_room_tv_input
-#switchbot Galaxy Light Buttons
-  - button:
-    - name: "Living Room - Galaxy White"
-      unique_id: living_room_galaxy_white
-      icon: mdi:earth
-      press:
-        service: shell_command.living_room_galaxy_white
-  - button:
-    - name: "Living Room - Galaxy Disco"
-      unique_id: living_room_galaxy_disco
-      icon: mdi:crystal-ball
-      press: 
-        service: shell_command.living_room_galaxy_disco
-
 ##Template - Sensors
-#   Tuya Pet Feeder Sensors from integration
+template:
+#   Date
   - sensor:
-      - name: 'Pet Feeder - Error Text'
-        unique_id: pet_feeder_error_text
-        state: >
-          {% set error = states('sensor.pet_feeder_errors') %}
-          {% if error == '0' %}No Errors
-          {% elif error == '1' %}Low Food
-          {% else %}{{error}}
-          {% endif %}
+    - name: 'date long'
+      state: "{{ as_timestamp(states('sensor.date')) | timestamp_custom('%a %-d %b %Y') }}"
+#   Unix Dates/Times
   - sensor:
-     - name: 'Pet Feeder - Battery'
-       unique_id: pet_feeder_battery
-       state: >
-         {% set batt = states('sensor.pet_feeder_battery_status') %}
-         {% if batt == 'empty' %}Empty
-         {% elif batt == 'low' %}Low
-         {% elif batt == 'full' %}Full
-         {% else %}{{ batt }}
-         {% endif %}
-       icon: >
-         {% set batt = states('sensor.pet_feeder_battery_status') %}
-         {% if batt == 'empty' %}mdi:battery-alert-variant-outline
-         {% elif batt == 'low' %}mdi:battery-low
-         {% elif batt == 'full' %}mdi:battery-high
-         {% else %}mdi:battery-medium
-         {% endif %}
+    - name: 'Unix Today'
+      state: "{{ (as_timestamp(states('sensor.date'))*1000) | int }}"
+  - sensor:
+    - name: 'Unix Tomorrow'
+      state: "{{ ((as_timestamp(states('sensor.date'))+86400)*1000) | int }}"
+  
+#   Extract temperature from Living Room Fan Heater
+  - sensor:
+    - name: 'Living Room - Temp'
+      unique_id: living_room_temp
+      icon: mdi:thermometer
+      unit_of_measurement: '°C'
+      state: "{{ state_attr('climate.fan_heater','current_temperature') | int }}"
+      
+#   Walk timer
+  - sensor:
+    - name: Walk Duration
+      unique_id: walk_duration
+      state: >
+        {% set Active = states('input_boolean.walk_active') %}
+        {% set Start = as_timestamp(states('input_datetime.walk_start_datetime')) | int %}
+        {% set End = as_timestamp(states('input_datetime.walk_end_datetime')) | int %}
+        {{ ((End - Start)/60) | int }}
+      unit_of_measurement: mins
+  - sensor:
+    - name: Walk Money
+      unique_id: walk_money
+      state: "{{'{:.2f}'.format(states('sensor.walk_duration') | float(2) * 0.003) }}"
+  - sensor:
+    - name: Walk Money String
+      unique_id: walk_money_string
+      state: "£{{ '{:.2f}'.format(states('sensor.walk_money') | float(2)) }}"
+  - sensor:
+    - name: Walk Total Money String
+      unique_id: walk_total_money_string
+      state: "£{{ states('input_number.walk_total_money') }}"
+      
 #   Pet Feeder sensors from Cloud API
+  - sensor:
+    - name: 'Pet Feeder - Error Text'
+      unique_id: pet_feeder_error_text
+      icon: mdi:alert-circle-outline
+      state: >
+        {% set error = state_attr('sensor.pet_feeder_record','fault') %}
+        {% if error == 0 %}No Errors
+        {% elif error == 1 %}Low Food
+        {% else %}{{error}}
+        {% endif %}
+  - sensor:
+    - name: 'Pet Feeder - Battery'
+      unique_id: pet_feeder_battery
+      state: >
+        {% set batt = state_attr('sensor.pet_feeder_record','battery') %}
+        {% if batt == 'empty' %}Empty
+        {% elif batt == 'low' %}Low
+        {% elif batt == 'full' %}Full
+        {% else %}{{ batt }}
+        {% endif %}
+      icon: >
+        {% set batt = state_attr('sensor.pet_feeder_record','battery') %}
+        {% if batt == 'empty' %}mdi:battery-alert-variant-outline
+        {% elif batt == 'low' %}mdi:battery-low
+        {% elif batt == 'full' %}mdi:battery-high
+        {% else %}mdi:battery-medium
+        {% endif %}
+  - sensor:
+    - name: 'Pet Feeder - Manual Feed'
+      unique_id: pet_feeder_manual
+      icon: mdi:bowl-mix
+      state: "{{ state_attr('sensor.pet_feeder_record', 'manual_feed') }}"
   - sensor:
     - name: "Pet Feeder - Feed Total"
       unique_id: pet_feeder_feed_total
       icon: mdi:bowl-mix
       state: "{{ state_attr('sensor.pet_feeder_record', 'records') | int(default=0) }}"
+  - sensor:
     - name: "Pet Feeder - Record Date Unix"
       unique_id: pet_feeder_record_date_unix
       state: "{{ state_attr('sensor.pet_feeder_record', 'date') }}"
+  - sensor:
     - name: "Pet Feeder - Record Date"
       unique_id: pet_feeder_record_date
-      state: "{{ state_attr('sensor.pet_feeder_record', 'date') | timestamp_custom('%d-%m-%Y') }}"
+      state: >
+        {% set Date = state_attr('sensor.pet_feeder_record', 'date') %}
+        {% if Date == 'None' %}None
+        {% else %}{{ Date | timestamp_custom('%d-%m-%Y') }}
+        {% endif %}
+  - sensor:
     - name: "Pet Feeder - Last Feed Unix"
       unique_id: pet_feeder_last_feed_unix
       state: "{{ state_attr('sensor.pet_feeder_record', 'lastTime') }}"
+  - sensor:
     - name: Pet Feeder - Last Feed
       unique_id: pet_feeder_last_feed
-      state: "{{ state_attr('sensor.pet_feeder_record', 'lastTime') | timestamp_custom('%H:%M') }}"
+      state: >
+        {% set Last = state_attr('sensor.pet_feeder_record', 'lastTime') %}
+        {% if Last == 'None' %}None
+        {% else %}{{ Last | timestamp_custom('%H:%M') }}
+        {% endif %}
+  - sensor:
     - name: "Pet Feeder - Active Time"
       unique_id: pet_feeder_active_time
       icon: mdi:calendar
       state: "{{ (states('input_number.pet_feeder_last_feed')|float) - (states('input_number.pet_feeder_first_feed')|float) }}"
+  - sensor:
     - name: "Pet Feeder - Feeds Due"
       unique_id: pet_feeder_feeds_due
       icon: mdi:bowl-mix-outline
@@ -533,6 +433,7 @@ template:
         {% elif now > lastFeed %}{{ states('input_number.pet_feeder_feeds_day') | int }}
         {% else %}{{ (((now - firstFeed) | float) / (feedInterval | float)) | int + 1 }}
         {% endif %}
+  - sensor:
     - name: "Pet Feeder - Feed Status"
       unique_id: pet_feeder_feed_status
       icon: mdi:cookie-clock
@@ -553,277 +454,508 @@ template:
         {% elif feedsDue == feedsDone %}{{ "Due in: " + timeUntilFeed }}
         {% else %}{{ "Ahead: " + timeUntilFeed }}
         {% endif %}
-#   Date
   - sensor:
-      - name: 'date long'
-        state: "{{ as_timestamp(states('sensor.date')) | timestamp_custom('%a %-d %b %Y') }}"
-#   Unix Dates/Times
+    - name: 'Pet Feeder - Meal Plan'
+      unique_id: pet_feeder_meal_plan
+      icon: mdi:notebook-outline
+      state: "{{ state_attr('sensor.pet_feeder_record', 'meal_plan') }}"
   - sensor:
-      - name: 'Unix Today'
-        state: "{{ (as_timestamp(states('sensor.date'))*1000) | int }}"
+    - name: Pet Feeder - Meal Plan Numbers
+      unique_id: pet_feeder_meal_plan_numbers
+      icon: mdi:notebook-outline
+      state: >
+        {% set Plan = states('sensor.pet_feeder_meal_plan') %}
+        {% set KeyList = states('sensor.key_converter') %}
+        {% set ns = namespace(Nums = KeyList.index(Plan[0])) %}
+        {% for i in range(1,32) %}
+          {% set ns.Nums = ns.Nums ~ ',' ~ KeyList.index(Plan[i]) %}
+        {% endfor %}
+        {{ ns.Nums }}
   - sensor:
-      - name: 'Unix Tomorrow'
-        state: "{{ ((as_timestamp(states('sensor.date'))+86400)*1000) | int }}"
+    - name: Pet Feeder - Meal Plan - Slot 1 - Power
+      unique_id: pet_feeder_slot1_power
+      icon: mdi:power
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set IO1 = (Nums.split(',')[5] | int) / 16 | int %}
+        {% if IO1 == 1 %}On
+        {% else %}Off
+        {% endif %}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 1 - Portions
+      unique_id: pet_feeder_slot1_portions
+      icon: mdi:numeric
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Por1 = Nums.split(',')[3] | int %}
+        {{ Por1 }}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 1 - Time
+      unique_id: pet_feeder_slot1_time
+      icon: mdi:clock-digital
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Hour1 = ((Nums.split(',')[0]|int)*4 + (Nums.split(',')[1]|int)/16) | int %}
+        {% set Min1 = ((Nums.split(',')[2]|int)/4 + (Nums.split(',')[1]|int) % 16|int *16) | int %}
+        {{ Hour1 }}:{{ '{:02}'.format(Min1) }}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 2 - Power
+      unique_id: pet_feeder_slot2_power
+      icon: mdi:power
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set IO2 = (Nums.split(',')[10]|int) / 4 %}
+        {% if IO2 == 1 %}On
+        {% else %}Off
+        {% endif %}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 2 - Portions
+      unique_id: pet_feeder_slot2_portions
+      icon: mdi:numeric
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Por2 = ((Nums.split(',')[9]|int/16) + (Nums.split(',')[8]|int*4)) | int %}
+        {{ Por2 }}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 2 - Time
+      unique_id: pet_feeder_slot2_time
+      icon: mdi:clock-digital
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Hour2 = (Nums.split(',')[6]|int/4 + Nums.split(',')[5]|int%16*16) | int %}
+        {% set Min2 = Nums.split(',')[7]|int %}
+        {{ Hour2 }}:{{ '{:02}'.format(Min2) }}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 3 - Power
+      unique_id: pet_feeder_slot3_power
+      icon: mdi:power
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set IO3 = Nums.split(',')[15]|int %}
+        {% if IO3 == 1 %}On
+        {% else %}Off
+        {% endif %}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 3 - Portions
+      unique_id: pet_feeder_slot3_portions
+      icon: mdi:numeric
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Por3 = (Nums.split(',')[14]|int/4 + Nums.split(',')[13]|int%16*16) | int %}
+        {{ Por3 }}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 3 - Time
+      unique_id: pet_feeder_slot3_time
+      icon: mdi:clock-digital
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Hour3 = Nums.split(',')[11]|int %}
+        {% set Min3 = ((Nums.split(',')[13]|int/16) % 16 + Nums.split(',')[12]|int*4) | int  %}
+        {{ Hour3 }}:{{ '{:02}'.format(Min3) }}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 4 - Power
+      unique_id: pet_feeder_slot4_power
+      icon: mdi:power
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set IO4 = (Nums.split(',')[21] | int) / 16 | int %}
+        {% if IO4 == 1 %}On
+        {% else %}Off
+        {% endif %}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 4 - Portions
+      unique_id: pet_feeder_slot4_portions
+      icon: mdi:numeric
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Por4 = (Nums.split(',')[19]) | int %}
+        {{ Por4 }}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 4 - Time
+      unique_id: pet_feeder_slot4_time
+      icon: mdi:clock-digital
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Hour4 = ((Nums.split(',')[16]|int)*4 + (Nums.split(',')[17]|int)/16) | int %}
+        {% set Min4 = ((Nums.split(',')[18]|int)/4 + ((Nums.split(',')[17]|int)%16 | int *16)) | int %}
+        {{ Hour4 }}:{{ '{:02}'.format(Min4) }}
 
-#   Switchbot Sensor
   - sensor:
-      - name: 'Kid Room Temp'
-        unique_id: kid_room_temp
-        unit_of_measurement: '°C'
-        icon: mdi:thermometer
-        state: "{{ state_attr('sensor.kid_room_sensor', 'temperature') }}"
+    - name: Pet Feeder - Meal Plan - Slot 5 - Power
+      unique_id: pet_feeder_slot5_power
+      icon: mdi:power
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set IO5 = (Nums.split(',')[26]|int) / 4 %}
+        {% if IO5 == 1 %}On
+        {% else %}Off
+        {% endif %}
   - sensor:
-      - name: 'Kid Room Humidity'
-        unique_id: kid_room_humidity
-        unit_of_measurement: '%'
-        icon: mdi:cloud-percent
-        state: "{{ state_attr('sensor.kid_room_sensor', 'humidity') }}"
-
-#   Switchbot Motion
+    - name: Pet Feeder - Meal Plan - Slot 5 - Portions
+      unique_id: pet_feeder_slot5_portions
+      icon: mdi:numeric
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Por5 = ((Nums.split(',')[25]|int/16) + (Nums.split(',')[24]|int*4)) | int %}
+        {{ Por5 }}
   - sensor:
-      - name: 'Dining Motion Detected'
-        unique_id: dining_motion_detected
-        icon: mdi:motion-sensor
-        state: "{{ state_attr('sensor.dining_motion', 'moveDetected') }}"
+    - name: Pet Feeder - Meal Plan - Slot 5 - Time
+      unique_id: pet_feeder_slot5_time
+      icon: mdi:clock-digital
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Hour5 = (Nums.split(',')[22]|int/4 + Nums.split(',')[21]|int%16*16) | int %}
+        {% set Min5 = Nums.split(',')[23]|int %}
+        {{ Hour5 }}:{{ '{:02}'.format(Min5) }}
   - sensor:
-      - name: 'Dining Motion Brightness'
-        unique_id: dining_motion_brightness
-        icon: mdi:brightness-6
-        state: >
-          {% set brightness = state_attr('sensor.dining_motion', 'brightness') %}
-          {% if brightness == 'bright' %}Bright
-          {% elif brightness == 'dim' %}Dim
-          {% else %}{{ brightness }}
-          {% endif %}
-
-#   Extract temperature from Living Room Fan Heater
+    - name: Pet Feeder - Meal Plan - Slot 6 - Power
+      unique_id: pet_feeder_slot6_power
+      icon: mdi:power
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set IO6 = Nums.split(',')[31]|int %}
+        {% if IO6 == 1 %}On
+        {% else %}Off
+        {% endif %}
   - sensor:
-      - name: 'Living Room - Temp'
-        unique_id: living_room_temp
-        icon: mdi:thermometer
-        unit_of_measurement: '°C'
-        state: "{{ state_attr('climate.fan_heater','current_temperature') | int }}"
+    - name: Pet Feeder - Meal Plan - Slot 6 - Portions
+      unique_id: pet_feeder_slot6_portions
+      icon: mdi:numeric
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Por6 = (Nums.split(',')[30]|int/4 + Nums.split(',')[29]|int%16*16) | int %}
+        {{ Por6 }}
+  - sensor:
+    - name: Pet Feeder - Meal Plan - Slot 6 - Time
+      unique_id: pet_feeder_slot6_time
+      icon: mdi:clock-digital
+      state: >
+        {% set Nums = states('sensor.pet_feeder_meal_plan_numbers') %}
+        {% set Hour6 = Nums.split(',')[27]|int %}
+        {% set Min6 = ((Nums.split(',')[29]|int/16) % 16 + Nums.split(',')[28]|int*4) | int  %}
+        {{ Hour6 }}:{{ '{:02}'.format(Min6) }}
+  - sensor:
+    - name: Pet Feeder - New Plan Numbers
+      unique_id: pet_feed_new_plan_numbers
+      icon: mdi:numeric
+      state: >
+        {% set Slot1Time = states('input_text.pet_feeder_slot_1_time') %}
+        {% set Slot1Hr = Slot1Time.split(':')[0] | int %}
+        {% set Slot1Min = Slot1Time.split(':')[1] | int %}
+        {% set Slot1 = states('input_boolean.pet_feeder_slot_1_power') %}
+        {% if Slot1 == "on" %}
+          {% set Slot1Power = 1 %}
+        {% else %}
+          {% set Slot1Power = 0 %}
+        {% endif %}
+        {% set Slot2Time = states('input_text.pet_feeder_slot_2_time') %}
+        {% set Slot2Hr = Slot2Time.split(':')[0] | int %}
+        {% set Slot2Port = states('input_number.pet_feeder_slot_2_portions') | int %}
+        {% set Slot2 = states('input_boolean.pet_feeder_slot_2_power') %}
+        {% if Slot2 == "on" %}
+          {% set Slot2Power = 1 %}
+        {% else %}
+          {% set Slot2Power = 0 %}
+        {% endif %}
+        {% set Slot3Time = states('input_text.pet_feeder_slot_3_time') %}
+        {% set Slot3Min = Slot3Time.split(':')[1] | int %}
+        {% set Slot3Port = states('input_number.pet_feeder_slot_3_portions') | int %}
+        {% set Slot3Power = states('input_boolean.pet_feeder_slot_3_power') %}
+        {% if Slot3Power == "on" %}
+          {% set Num15 = 1 %}
+        {% else %}
+          {% set Num15 = 0 %}
+        {% endif %}
+        {% set Slot4Time = states('input_text.pet_feeder_slot_4_time') %}
+        {% set Slot4Hr = Slot4Time.split(':')[0] | int %}
+        {% set Slot4Min = Slot4Time.split(':')[1] | int %}
+        {% set Slot4 = states('input_boolean.pet_feeder_slot_4_power') %}
+        {% if Slot4 == "on" %}
+          {% set Slot4Power = 1 %}
+        {% else %}
+          {% set Slot4Power = 0 %}
+        {% endif %}
+        {% set Slot5Time = states('input_text.pet_feeder_slot_5_time') %}
+        {% set Slot5Hr = Slot5Time.split(':')[0] | int %}
+        {% set Slot5Port = states('input_number.pet_feeder_slot_5_portions') | int %}
+        {% set Slot5Power = states('input_boolean.pet_feeder_slot_5_power') %}
+        {% if Slot5Power == "on" %}
+          {% set Slot5Power = 1 %}
+        {% else %}
+          {% set Slot5Power = 0 %}
+        {% endif %}
+        {% set Slot6Time = states('input_text.pet_feeder_slot_6_time') %}
+        {% set Slot6Min = Slot6Time.split(':')[1] | int %}
+        {% set Slot6Port = states('input_number.pet_feeder_slot_6_portions') | int %}
+        {% set Slot6Power = states('input_boolean.pet_feeder_slot_6_power') %}
+        {% if Slot6Power == "on" %}
+          {% set Num31 = 1 %}
+        {% else %}
+          {% set Num31 = 0 %}
+        {% endif %}
+        {% set Num0 = (Slot1Hr/4) | int %}
+        {% set Num1 = ((Slot1Hr%4)*16 + Slot1Min/16) | int %}
+        {% set Num2 = (Slot1Min%16/4) | int %}
+        {% set Num3 = states('input_number.pet_feeder_slot_1_portions') | int %}
+        {% set Num5 = (Slot1Power*16) + ((Slot2Hr/16)|int) | int %}
+        {% set Num6 = ((Slot2Hr - (((Slot2Hr/16) |int)*16))*4) | int %}
+        {% set Num7 = Slot2Time.split(':')[1] | int %}
+        {% set Num8 = (Slot2Port/4) | int %}
+        {% set Num9 = (Slot2Port%4*16) | int %}
+        {% set Num10 = (Slot2Power*4) | int %}
+        {% set Num11 = Slot3Time.split(':')[0] | int %}
+        {% set Num12 = (Slot3Min/4) | int %}
+        {% set Num13 = ((Slot3Min%4)*16 + ((Slot3Port/16)|int)) | int %}
+        {% set Num14 = ((Slot3Port%16)*4) | int %}
+        {% set Num16 = (Slot4Hr/4) | int %}
+        {% set Num17 = ((Slot4Hr%4)*16 + Slot4Min/16) | int %}
+        {% set Num18 = (Slot4Min%16/4) | int %}
+        {% set Num19 = states('input_number.pet_feeder_slot_4_portions') | int %}
+        {% set Num21 = (Slot4Power*16) + ((Slot5Hr/16)|int) | int %}
+        {% set Num22 = ((Slot5Hr - (((Slot5Hr/16) |int)*16))*4) | int %}
+        {% set Num23 = Slot5Time.split(':')[1] | int %}
+        {% set Num24 = (Slot5Port/4) | int %}
+        {% set Num25 = (Slot5Port%4*16) | int %}
+        {% set Num26 = (Slot5Power*4) | int %}
+        {% set Num27 = Slot6Time.split(':')[0] | int %}
+        {% set Num28 = (Slot6Min/4) | int %}
+        {% set Num29 = ((Slot6Min%4)*16 + ((Slot6Port/16)|int)) | int %}
+        {% set Num30 = ((Slot6Port%16)*4) | int %}
+        {% set NewNums = Num0~','~Num1~','~Num2~','~Num3~',0,'~Num5~','~Num6~','~Num7~','~Num8~','~Num9~','~Num10~','~Num11~','~Num12~','~Num13~','~Num14~','~Num15~','~Num16~','~Num17~','~Num18~','~Num19~',0,'~Num21~','~Num22~','~Num23~','~Num24~','~Num25~','~Num26~','~Num27~','~Num28~','~Num29~','~Num30~','~Num31 %}
+        {{ NewNums }}
+  - sensor:
+    - name: Pet Feeder - New Plan
+      unique_id: pet_feeder_new_plan
+      icon: mdi:notebook-outline
+      state: >
+        {% set NewPlanNums = states('sensor.pet_feeder_new_plan_numbers') %}
+        {% set KeyList = states('sensor.key_converter') %}
+        {% set ns = namespace(Letters = "") %}
+        {% for i in range(0,32) %}
+          {% set ns.Letters = ns.Letters ~ KeyList[NewPlanNums.split(',')[i]|int] %}
+        {% endfor %}
+        {{ ns.Letters }}
 
 #   Washer Dryer
   - sensor:
-      - name: 'Washer/Dryer - WiFi'
-        unique_id: washer_dryer_wifi
-        icon: mdi:washing-machine
-        state: >
-          {% set WiFi = state_attr('sensor.candy_washer_dryer', 'WiFiStatus') | default(1) %}
-          {% if WiFi == '0' %}On
-          {% elif WiFi == '1' %}Off
-          {% else %}{{ WiFi }}
-          {% endif %}
+    - name: 'Washer/Dryer - WiFi'
+      unique_id: washer_dryer_wifi
+      icon: mdi:washing-machine
+      state: >
+        {% set WiFi = state_attr('sensor.candy_washer_dryer', 'WiFiStatus') | default(1) %}
+        {% if WiFi == '0' %}On
+        {% elif WiFi == '1' %}Off
+        {% else %}{{ WiFi }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Error'
-        unique_id: washer_dryer_error
-        icon: mdi:alert-circle
-        state: >
-          {% set Error = state_attr('sensor.candy_washer_dryer', 'Err') | default(255) %}
-          {% if Error == '255' %}No Errors
-          {% elif Error is number %}{{ Error }}
-          {% else %}Off
-          {% endif %}
+    - name: 'Washer/Dryer - Error'
+      unique_id: washer_dryer_error
+      icon: mdi:alert-circle
+      state: >
+        {% set Error = state_attr('sensor.candy_washer_dryer', 'Err') | default(255) %}
+        {% if Error == '255' %}No Errors
+        {% elif Error is number %}{{ Error }}
+        {% else %}Off
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Status'
-        unique_id: washer_dryer_status
-        icon: mdi:chart-pie
-        state: >
-          {% set Status = state_attr('sensor.candy_washer_dryer', 'MachMd') %}
-          {% if Status == "1" %}Not Started
-          {% elif Status == "2" %}Running
-          {% elif Status == "3" %}Paused
-          {% elif Status == "4" %}Setting Up
-          {% elif Status == "5" %}Delayed
-          {% elif Status == "7" %}Finished
-          {% elif Status == None %}Off
-          {% else %}{{ Status }}
-          {% endif %}
+    - name: 'Washer/Dryer - Status'
+      unique_id: washer_dryer_status
+      icon: mdi:chart-pie
+      state: >
+        {% set Status = state_attr('sensor.candy_washer_dryer', 'MachMd') %}
+        {% if Status == "1" %}Not Started
+        {% elif Status == "2" %}Running
+        {% elif Status == "3" %}Paused
+        {% elif Status == "4" %}Setting Up
+        {% elif Status == "5" %}Delayed
+        {% elif Status == "7" %}Finished
+        {% elif Status == None %}Off
+        {% else %}{{ Status }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Program'
-        unique_id: washer_dryer_program
-        icon: mdi:progress-star
-        state: >
-          {% set Prog = state_attr('sensor.candy_washer_dryer', 'Pr') %}
-          {% if Prog == "1" %}Special
-          {% elif Prog == "2" %}Cotton
-          {% elif Prog == "3" %}Colour
-          {% elif Prog == "4" %}Daily
-          {% elif Prog == "5" %}Rapid
-          {% elif Prog == "9" %}Spin/ Drain
-          {% elif Prog == "11" %}Bed Linen
-          {% elif Prog == "12" %}Dry Low
-          {% elif Prog == "13" %}Dry High
-          {% elif Prog == "14" %}Rapid W&D
-          {% elif Prog == "17" %}Hygeine
-          {% elif Prog == None %}Off
-          {% else %}{{ Prog }}
-          {% endif %}
+    - name: 'Washer/Dryer - Program'
+      unique_id: washer_dryer_program
+      icon: mdi:progress-star
+      state: >
+        {% set Prog = state_attr('sensor.candy_washer_dryer', 'Pr') %}
+        {% if Prog == "1" %}Special
+        {% elif Prog == "2" %}Cotton
+        {% elif Prog == "3" %}Colour
+        {% elif Prog == "4" %}Daily
+        {% elif Prog == "5" %}Rapid
+        {% elif Prog == "9" %}Spin/ Drain
+        {% elif Prog == "11" %}Bed Linen
+        {% elif Prog == "12" %}Dry Low
+        {% elif Prog == "13" %}Dry High
+        {% elif Prog == "14" %}Rapid W&D
+        {% elif Prog == "17" %}Hygeine
+        {% elif Prog == None %}Off
+        {% else %}{{ Prog }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Phase'
-        unique_id: washer_dryer_phase
-        icon: mdi:progress-question
-        state: >
-          {% set Phase = state_attr('sensor.candy_washer_dryer', 'PrPh') %} 
-          {% if Phase == "0" %}Delayed
-          {% elif Phase == "1" %}Prewash
-          {% elif Phase == "2" %}Wash
-          {% elif Phase == "3" %}Rinse
-          {% elif Phase == "4" %}Spin/ Drain
-          {% elif Phase == "5" %}End
-          {% elif Phase == "6" %}Drying
-          {% elif Phase == "7" %}Error
-          {% elif Phase == "8" %}Steam
-          {% elif Phase == "9" %}Goodnight
-          {% elif Phase == "10" %}Spin
-          {% elif Phase == None %}Off
-          {% else %}{{ Phase }}
-          {% endif %}
+    - name: 'Washer/Dryer - Phase'
+      unique_id: washer_dryer_phase
+      icon: mdi:progress-question
+      state: >
+        {% set Phase = state_attr('sensor.candy_washer_dryer', 'PrPh') %} 
+        {% if Phase == "0" %}Delayed
+        {% elif Phase == "1" %}Prewash
+        {% elif Phase == "2" %}Wash
+        {% elif Phase == "3" %}Rinse
+        {% elif Phase == "4" %}Spin/ Drain
+        {% elif Phase == "5" %}End
+        {% elif Phase == "6" %}Drying
+        {% elif Phase == "7" %}Error
+        {% elif Phase == "8" %}Steam
+        {% elif Phase == "9" %}Goodnight
+        {% elif Phase == "10" %}Spin
+        {% elif Phase == None %}Off
+        {% else %}{{ Phase }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Wash Temp'
-        unique_id: washer_dryer_temp
-        icon: mdi:thermometer-lines
-        unit_of_measurement: '°C'
-        state: >
-          {% set Temp = state_attr('sensor.candy_washer_dryer', 'Temp') %}
-          {% if Temp == None %}0
-          {% elif Temp == "0" %}0
-          {% else %}{{ Temp }}
-          {% endif %} 
+    - name: 'Washer/Dryer - Wash Temp'
+      unique_id: washer_dryer_temp
+      icon: mdi:thermometer-lines
+      unit_of_measurement: '°C'
+      state: >
+        {% set Temp = state_attr('sensor.candy_washer_dryer', 'Temp') %}
+        {% if Temp == None %}0
+        {% elif Temp == "0" %}0
+        {% else %}{{ Temp }}
+        {% endif %} 
   - sensor:
-      - name: 'Washer/Dryer - Spin Speed'
-        unique_id: washer_dryer_spin_speed
-        icon: mdi:speedometer
-        unit_of_measurement: rpm
-        state: >
-          {% set Spin = state_attr('sensor.candy_washer_dryer', 'SpinSp') %}
-          {% if Spin == None %}0
-          {% elif  Spin == "0" %}0
-          {% else %}{{ (Spin | int) * 100  }}
-          {% endif %}
+    - name: 'Washer/Dryer - Spin Speed'
+      unique_id: washer_dryer_spin_speed
+      icon: mdi:speedometer
+      unit_of_measurement: rpm
+      state: >
+        {% set Spin = state_attr('sensor.candy_washer_dryer', 'SpinSp') %}
+        {% if Spin == None %}0
+        {% elif  Spin == "0" %}0
+        {% else %}{{ (Spin | int) * 100  }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Wash Time'
-        unique_id: washer_dryer_wash_time
-        icon: mdi:timer
-        unit_of_measurement: 'mins'
-        state: >
-          {% set WashT = state_attr('sensor.candy_washer_dryer', 'RemTime') %}
-          {% if WashT == None %}0
-          {% else %}{{ WashT | int }}
-          {% endif %}
+    - name: 'Washer/Dryer - Wash Time'
+      unique_id: washer_dryer_wash_time
+      icon: mdi:timer
+      unit_of_measurement: 'mins'
+      state: >
+        {% set WashT = state_attr('sensor.candy_washer_dryer', 'RemTime') %}
+        {% if WashT == None %}0
+        {% else %}{{ WashT | int }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Dry Time'
-        unique_id: washer_dryer_dry_time
-        icon: mdi:clock-time-four
-        state: >
-          {% set DryT = state_attr('sensor.candy_washer_dryer', 'DryT') %}
-          {% if DryT == None %}Off
-          {% elif DryT == "0" %}Dry Off
-          {% elif DryT == "3" %}Iron Dry
-          {% elif DryT == "4" %}Dry Finished
-          {% elif DryT == "5" %}Dry Ending
-          {% else %}{{ DryT }}
-          {% endif %}
+    - name: 'Washer/Dryer - Dry Time'
+      unique_id: washer_dryer_dry_time
+      icon: mdi:clock-time-four
+      state: >
+        {% set DryT = state_attr('sensor.candy_washer_dryer', 'DryT') %}
+        {% if DryT == None %}Off
+        {% elif DryT == "0" %}Dry Off
+        {% elif DryT == "3" %}Iron Dry
+        {% elif DryT == "4" %}Dry Finished
+        {% elif DryT == "5" %}Dry Ending
+        {% else %}{{ DryT }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Delay Time'
-        unique_id: washer_dryer_delay_time
-        icon: mdi:timer
-        unit_of_measurement: 'hours'
-        state: >
-          {% set DelT = state_attr('sensor.candy_washer_dryer', 'DelVal') %}
-          {% if DelT == None %}0
-          {% else %}{{ DelT | int }}
-          {% endif %}
+    - name: 'Washer/Dryer - Delay Time'
+      unique_id: washer_dryer_delay_time
+      icon: mdi:timer
+      unit_of_measurement: 'hours'
+      state: >
+        {% set DelT = state_attr('sensor.candy_washer_dryer', 'DelVal') %}
+        {% if DelT == None %}0
+        {% else %}{{ DelT | int }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Total Time'
-        unique_id: washer_dryer_total_time
-        icon: mdi:timer
-        state: >
-          {% set TotalT = state_attr('sensor.candy_washer_dryer', 'TotalTime') %}
-          {% if TotalT == None %}0
-          {% else %}{{ TotalT }}
-          {% endif %}
+    - name: 'Washer/Dryer - Total Time'
+      unique_id: washer_dryer_total_time
+      icon: mdi:timer
+      state: >
+        {% set TotalT = state_attr('sensor.candy_washer_dryer', 'TotalTime') %}
+        {% if TotalT == None %}0
+        {% else %}{{ TotalT }}
+        {% endif %}
   - sensor:
-      - name: 'Washer/Dryer - Max Delay'
-        unique_id: washer_dryer_max_delay
-        icon: mdi:timer
-        state: >
-          {% set Status = states('sensor.washer_dryer_wifi') %}
-          {% set Delay = states('sensor.washer_dryer_delay_time') | int(default=0) * 60 %}
-          {% set DelayMax = states('sensor.washer_dryer_max_delay') | int(default=0) %}
-          {% set Total = states('sensor.washer_dryer_total_time') | int %}
-          {% if Total == 0 %}0
-          {% elif Status == 'Off' %}{{ DelayMax }}
-          {% elif DelayMax >= Delay %}{{ DelayMax }}
-          {% else %}{{ Delay }}
-          {% endif %}              
-  - sensor:
-      - name: 'Washer/Dryer - Max Time'
-        unique_id: washer_dryer_max_time
-        icon: mdi:timer
-        state: >
-          {% set Status = states('sensor.washer_dryer_wifi') %}
-          {% set Total = states('sensor.washer_dryer_total_time') | int(default=0) %}
-          {% set TMax = states('sensor.washer_dryer_max_time') | int(default=0) %}
-          {% set DelayMax = states('sensor.washer_dryer_delay_max') | int(default=0) %}
-          {% if Total == 0 %}0
-          {% elif Status == 'Off' %}{{ TMax }}
-          {% elif Total <= (TMax - DelayMax) %}{{ TMax }}
-          {% else %}{{ Total }}
-          {% endif %}
+    - name: 'Washer/Dryer - Max Delay'
+      unique_id: washer_dryer_max_delay
+      icon: mdi:timer
+      state: >
+        {% set Status = states('sensor.washer_dryer_wifi') %}
+        {% set Delay = states('sensor.washer_dryer_delay_time') | int(default=0) * 60 %}
+        {% set DelayMax = states('sensor.washer_dryer_max_delay') | int(default=0) %}
+        {% set Total = states('sensor.washer_dryer_total_time') | int(default=0) %}
+        {% if Total == 0 %}0
+        {% elif Status == 'Off' %}{{ DelayMax }}
+        {% elif DelayMax >= Delay %}{{ DelayMax }}
+        {% else %}{{ Delay }}
+        {% endif %}     
+  - sensor:         
+    - name: 'Washer/Dryer - Max Time'
+      unique_id: washer_dryer_max_time
+      icon: mdi:timer
+      state: >
+        {% set Status = states('sensor.washer_dryer_wifi') %}
+        {% set Total = states('sensor.washer_dryer_total_time') | int(default=0) %}
+        {% set TMax = states('sensor.washer_dryer_max_time') | int(default=0) %}
+        {% set DelayMax = states('sensor.washer_dryer_delay_max') | int(default=0) %}
+        {% if Total == 0 %}0
+        {% elif Status == 'Off' %}{{ TMax }}
+        {% elif Total <= (TMax - DelayMax) %}{{ TMax }}
+        {% else %}{{ Total }}
+        {% endif %}
 
 #   EWPE Dehumidifier
   - sensor:
-      - name: 'EWPE Dehumidifier Humidity'
-        unique_id: ewpe_dehumidifier_humidity
-        icon: mdi:cloud-percent
-        state: "{{ state_attr('sensor.ewpe_dehumidifier','DwatSen') | int(default=0)  }}"
-        unit_of_measurement: '%'
+    - name: 'EWPE Dehumidifier Humidity'
+      unique_id: ewpe_dehumidifier_humidity
+      icon: mdi:cloud-percent
+      state: "{{ state_attr('sensor.ewpe_dehumidifier','DwatSen') | int(default=0)  }}"
+      unit_of_measurement: '%'
   - sensor:
-      - name: 'EWPE Dehumidifier Target Humidity'
-        unique_id: ewpe_dehumidifier_target_humidity
-        icon: mdi:cloud-percent
-        state: "{{ (state_attr('sensor.ewpe_dehumidifer','Dwet')|int(default=0)) * 5 + 30 }}"
-        unit_of_measurement: '%'
+    - name: 'EWPE Dehumidifier Target Humidity'
+      unique_id: ewpe_dehumidifier_target_humidity
+      icon: mdi:cloud-percent
+      state: "{{ (state_attr('sensor.ewpe_dehumidifer','Dwet')|int(default=0)) * 5 + 30 }}"
+      unit_of_measurement: '%'
   - sensor:
-      - name: 'EWPE Dehumidifier Mode'
-        unique_id: ewpe_dehumidifier_mode
-        icon: mdi:list-box-outline
-        state: >
-          {% set Mode = state_attr('sensor.ewpe_dehumidifier','Dmod') %}
-          {% if Mode == 0 %}Home
-          {% elif Mode == 1 %}Away
-          {% else %}Unknown {{ Mode }}
-          {% endif %}
+    - name: 'EWPE Dehumidifier Mode'
+      unique_id: ewpe_dehumidifier_mode
+      icon: mdi:list-box-outline
+      state: >
+        {% set Mode = state_attr('sensor.ewpe_dehumidifier','Dmod') %}
+        {% if Mode == 0 %}Home
+        {% elif Mode == 1 %}Away
+        {% else %}Unknown {{ Mode }}
+        {% endif %}
   - sensor:
-      - name: 'EWPE Dehumidifier Full'
-        unique_id: ewpe_dehumidifier_full
-        icon: mdi:gauge-full
-        state: >
-          {% set Full = state_attr('sensor.ewpe_dehumidifier','DwatFul') %}
-          {% if Full == 0 %}OK
-          {% elif Full == 1 %}Full
-          {% else %}{{ Full }}
-          {% endif %}
+    - name: 'EWPE Dehumidifier Full'
+      unique_id: ewpe_dehumidifier_full
+      icon: mdi:gauge-full
+      state: >
+        {% set Full = state_attr('sensor.ewpe_dehumidifier','DwatFul') %}
+        {% if Full == 0 %}OK
+        {% elif Full == 1 %}Full
+        {% else %}{{ Full }}
+        {% endif %}
   - sensor:
-      - name: 'EWPE Dehumidifier Filter'
-        unique_id: ewpe_dehumidifier_filter
-        icon: mdi:air-filter
-        state: >
-          {% set Filter = state_attr('sensor.ewpe_dehumidifier','Dfltr') %}
-          {% if Filter == 0 %}OK
-          {% elif Filter == 1 %}Change
-          {% else %}{{ Filter }}
-          {% endif %}
+    - name: 'EWPE Dehumidifier Filter'
+      unique_id: ewpe_dehumidifier_filter
+      icon: mdi:air-filter
+      state: >
+        {% set Filter = state_attr('sensor.ewpe_dehumidifier','Dfltr') %}
+        {% if Filter == 0 %}OK
+        {% elif Filter == 1 %}Change
+        {% else %}{{ Filter }}
+        {% endif %}
   - sensor:
-      - name: 'EWPE Dehumidifier Temp'
-        unique_id: ewpe_dehumidifier_temp
-        icon: mdi:thermometer
-        state: "{{ state_attr('sensor.ewpe_dehumidifier','TemSen') }}"
-        unit_of_measurement: '°C'
+    - name: 'EWPE Dehumidifier Temp'
+      unique_id: ewpe_dehumidifier_temp
+      icon: mdi:thermometer
+      state: "{{ state_attr('sensor.ewpe_dehumidifier','TemSen') }}"
+      unit_of_measurement: '°C'
   - sensor:
-      - name: 'EWPE Dehumidifier Error'
-        unique_id: ewpe_dehumidifier_error
-        icon: mdi:alert-octagon
-        state: "{{ state_attr('sensor.ewpe_dehumidifier','AllErr') }}"
+    - name: 'EWPE Dehumidifier Error'
+      unique_id: ewpe_dehumidifier_error
+      icon: mdi:alert-octagon
+      state: "{{ state_attr('sensor.ewpe_dehumidifier','AllErr') }}"
