@@ -1,29 +1,668 @@
 views:
-  - theme: Backend-selected
-    icon: mdi:home
+  - theme: LCARS Default
+    title: Ship
+    path: Ship
     type: panel
-    title: Home
-    visible:
-      - user: d1223e5a6a5044e8a21955801f81f08a
-      - user: 3e15b70b248447a883aa57cda02d0478
-      - user: 7bd1e6e218e242c78adfbea8421bcb6a
-      - user: bb227c95502048a9b197b0ec3d2c82b1
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: markdown
+                content: '# Bridge Command'
+                theme: LCARS Default
+                card_mod:
+                  class: footer
+              - type: markdown
+                content: '# {{states("sensor.date_long")}}'
+                theme: LCARS Default
+                card_mod:
+                  class: footer-open
+                  style: |
+                    ha-markdown {
+                      justify-content: flex-end;
+                    }
+          - type: horizontal-stack
+            cards:
+              - type: markdown
+                content: '# Ops'
+                theme: LCARS Default
+                card_mod:
+                  class: header
+              - type: markdown
+                content: '# Sensors'
+                theme: LCARS Default
+                card_mod:
+                  class: header-open
+                  style: |
+                    ha-card {
+                      text-align: center;
+                    }
+              - type: markdown
+                content: '# Illumination'
+                theme: LCARS Default
+                card_mod:
+                  class: header-open
+                  style: |
+                    ha-card {
+                      text-align: right;
+                    }
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: '&nbsp;'
+                    theme: LCARS Navigation
+                    card_mod:
+                      class: middle
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Captain Quarters Fan
+                    icon: mdi:fan
+                    theme: LCARS Navigation
+                    entity: switch.bedroom_fan
+                    card_mod:
+                      class: button-bullet
+                      style: |
+                        ha-card {
+                          background: {{ 'orange' if states('switch.bedroom_fan') == 'on' }}
+                        }
+                    show_state: true
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Lounge Fan
+                    icon: mdi:fan
+                    theme: LCARS Navigation
+                    entity: switch.living_room_fan_heater
+                    card_mod:
+                      class: button-bullet
+                      style: |
+                        ha-card {
+                          background: {{ 'orange' if states('switch.living_room_fan_heater') == 'on' }}
+                        }
+                    show_state: true
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: humidifier.aromatherapy_machine
+                    show_state: true
+                    theme: LCARS Navigation
+                    hold_action:
+                      action: more-info
+                    card_mod:
+                      class: button-bullet
+                      style: |
+                        ha-card {
+                          background: {{ 'orange' if states('humidifier.aromatherapy_machine') == 'on' }}
+                        }
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Hydroponics
+                    theme: LCARS Navigation
+                    entity: sensor.waterer_moisture
+                    show_state: true
+                    tap_action:
+                      action: call-service
+                      service: mqtt.publish
+                      data:
+                        topic: waterer/waterpump
+                        payload: Requested
+                      target: {}
+                    hold_action:
+                      action: call-service
+                      service: mqtt.publish
+                      data:
+                        topic: waterer/waterpump
+                        payload: Cancelled
+                      target: {}
+                    card_mod:
+                      class: button-bullet
+                      style: |
+                        :host {
+                          --paper-item-icon-color: {{ 
+                            '#FF0000' if states('sensor.waterer_moisture') | float < 10 else 
+                            '#8adb7f' if states('sensor.waterer_moisture') | float < 80 else 
+                            '#0000FF' }} !important; 
+                        }
+                        ha-card {
+                          background-color: {{ 
+                            '#FF0000' if states('sensor.waterer_moisture') | float < 10 else 
+                            '#8adb7f' if states('sensor.waterer_moisture') | float < 80 else 
+                            '#0000FF' }}; 
+                        }
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Dehumidifier
+                    theme: LCARS Navigation
+                    entity: switch.ewpe_dehumidifier_power
+                    show_state: true
+                    tap_action:
+                      action: call-service
+                      service: switch.toggle
+                      target:
+                        entity_id: switch.ewpe_dehumidifier_power
+                    card_mod:
+                      class: button-bullet
+                      style: |
+                        ha-card {
+                          background: {{ 'orange' if states('switch.ewpe_dehumidifier_power') == 'on' }}
+                        }
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Feed
+                    theme: LCARS Navigation
+                    entity: sensor.pet_feeder_feed_status
+                    show_state: true
+                    tap_action:
+                      action: call-service
+                      service: script.pet_feeder_feed
+                      target: {}
+                    card_mod:
+                      class: button-bullet
+                      style: |
+                        :host {
+                          --paper-item-icon-color: {{
+                            '#8adb7f' if states('sensor.pet_feeder_feed_status') == "Feed Due" else
+                            '#FF0000' if states('sensor.pet_feeder_feed_status').split(':')[0] == "Ahead" else
+                            '#0088FF' }} !important;
+                        }
+                        ha-card {
+                          background-color: {{
+                            '#8adb7f' if states('sensor.pet_feeder_feed_status') == "Feed Due" else
+                            '#FF0000' if states('sensor.pet_feeder_feed_status').split(':')[0] == "Ahead" else
+                            '#0088FF' }};
+                        }
+                  - type: markdown
+                    content: '&nbsp;'
+                    theme: LCARS Navigation
+                    card_mod:
+                      class: middle
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: '&nbsp;'
+                    theme: LCARS Navigation
+                    card_mod:
+                      class: middle-blank
+                  - type: markdown
+                    content: Local Weather
+                    theme: LCARS Romulus
+                    card_mod:
+                      class: bar
+                  - show_current: true
+                    show_forecast: false
+                    type: weather-forecast
+                    entity: weather.forecast_home
+                    forecast_type: hourly
+                    theme: LCARS Cardassia
+                    name: ' '
+                    card_mod:
+                      class: middle-blank
+                  - type: markdown
+                    content: Temperature
+                    theme: LCARS Romulus
+                    card_mod:
+                      class: bar
+                  - show_name: true
+                    show_icon: false
+                    show_state: true
+                    type: glance
+                    entities:
+                      - entity: sensor.living_room_temp
+                        name: Crew Quarters
+                        card_mod:
+                          style: |
+                            :host {
+                              color: {{
+                                '#FF0000' if states('sensor.living_room_temp') | float > 30 else
+                                '#FF8F07' if states('sensor.living_room_temp') | float > 25 else
+                                '#FFC407' if states('sensor.living_room_temp') | float > 20 else 
+                                '#8adb7f' if states('sensor.living_room_temp') | float > 15 else
+                                '#0066FF' if states('sensor.living_room_temp') | float > 3 else
+                                '#FFFFFF' }};
+                            }
+                      - entity: sensor.ewpe_dehumidifier_temp
+                        name: Lounge
+                        card_mod:
+                          style: |
+                            :host {
+                              color: {{
+                                  '#FF0000' if (states('sensor.ewpe_dehumidifier_temp') | float) > 30 else
+                                  '#FF8F07' if (states('sensor.ewpe_dehumidifier_temp') | float) > 25 else
+                                  '#FFC407' if (states('sensor.ewpe_dehumidifier_temp') | float) > 20 else
+                                  '#8adb7f' if (states('sensor.ewpe_dehumidifier_temp') | float) > 15 else 
+                                  '#0000FF' if (states('sensor.ewpe_dehumidifier_temp') | float) > 3 else
+                                  '#FFFFFF'}} !important;
+                            }
+                      - entity: sensor.bedroom_meter_temperature
+                        name: Captains Quarters
+                        card_mod:
+                          style: |
+                            :host {
+                              color: {{
+                                  '#FF0000' if (states('sensor.bedroom_meter_temperature') | float) > 30 else
+                                  '#FF8F07' if (states('sensor.bedroom_meter_temperature') | float) > 25 else
+                                  '#FFC407' if (states('sensor.bedroom_meter_temperature') | float) > 20 else
+                                  '#8adb7f' if (states('sensor.bedroom_meter_temperature') | float) > 15 else 
+                                  '#0000FF' if (states('sensor.bedroom_meter_temperature') | float) > 3 else
+                                  '#FFFFFF'}} !important;
+                            }
+                    theme: LCARS Cardassia
+                    card_mod:
+                      class: middle-blank
+                  - type: markdown
+                    content: Humidity
+                    theme: LCARS Romulus
+                    card_mod:
+                      class: bar
+                  - show_name: true
+                    show_icon: false
+                    show_state: true
+                    type: glance
+                    entities:
+                      - entity: sensor.ewpe_dehumidifier_humidity
+                        name: Lower Deck
+                        card_mod:
+                          style: |
+                            :host {
+                              color: {{
+                                '#FF8888' if (states('sensor.ewpe_dehumidifier_humidity') | float) < 30 else 
+                                '#8888FF' if (states('sensor.ewpe_dehumidifier_humidity') | float) > 60 else 
+                                '#8adb7f' }};
+                            }
+                      - entity: sensor.ewpe_dehumidifier_full
+                        name: Water Tank
+                        card_mod:
+                          style: |
+                            :host { 
+                              color: {{ 
+                                '#FF8888' if states('sensor.ewpe_dehumidifier_full') == "Full" else 
+                                '#8adb7f' }};
+                            }
+                      - entity: sensor.bedroom_meter_humidity
+                        name: Upper Deck
+                        card_mod:
+                          style: |
+                            :host {
+                              color: {{
+                                '#FF8888' if (states('sensor.bedroom_meter_humidity') | float) < 30 else 
+                                '#8888FF' if (states('sensor.bedroom_meter_humidity') | float) > 60 else 
+                                '#8adb7f' }};
+                            }
+                    theme: LCARS Cardassia
+                    card_mod:
+                      class: middle-blank
+                  - type: markdown
+                    content: Laundry
+                    theme: LCARS Romulus
+                    card_mod:
+                      class: bar
+                  - type: custom:config-template-card
+                    variables:
+                      - states['sensor.washer_dryer_max_time'].state
+                      - states['sensor.washer_dryer_delay_time'].state
+                      - states['sensor.washer_dryer_wash_time'].state
+                      - states['sensor.washer_dryer_dry_time'].state
+                    entities:
+                      - sensor.washer_dryer_max_time
+                      - sensor.washer_dryer_total_time
+                      - sensor.washer_dryer_delay_time
+                      - sensor.washer_dryer_wash_time
+                      - sensor.washer_dryer_dry_time
+                    card:
+                      type: custom:bar-card
+                      theme: LCARS Cardassia
+                      entities:
+                        - entity: sensor.washer_dryer_total_time
+                          name: |-
+                            "${vars[1] > 0 ? 'Washer/Dryer - Delayed'
+                             : vars[3] != 'Dry Off' ? 'Washer/Dryer - Drying'
+                             : vars[2] > 0 ? 'Washer/Dryer - Washing'  
+                             : 'Washer/Dryer - Finished'}"
+                          unit_of_measurement: mins
+                          min: '0'
+                          max: ${+vars[0]}
+                          icon: mdi:washing-machine
+                          positions:
+                            indicator: 'off'
+                          severity:
+                            - color: |-
+                                "${vars[1] > 0 ? '#7634c7'
+                                 : vars[3] != 'Dry Off' ? '#c77634'
+                                 : vars[2] > 0 ? '#2f5a9e'
+                                 : '#a32e2e'}"
+                              from: 0
+                              to: 2000
+                          tap_action:
+                            action: navigate
+                            navigation_path: washing-machine
+                      card_mod:
+                        class: middle-blank
+                        style: |
+                          ha-card {
+                            border-radius: 30px;
+                            --paper-item-icon-color: {{
+                              '#7634c7' if (states('sensor.washer_dryer_delay_time') | int > 0) else
+                              '#c77634' if (states('sensor.washer_dryer_dry_time') != 'Dry Off') else
+                              '#2f5a9e' if (states('sensor.washer_dryer_wash_time') | int > 0) else
+                              '#a32e2e' }};
+                          }
+                          bar-card-name {
+                            font-size: 16px;
+                            line-height: 30px;
+                          }
+                          bar-card-value {
+                            font-size: 18px;
+                          }
+                          .card-content{
+                            padding: 5px;
+                          }
+                          bar-card-background {
+                            border-radius: 30px;
+                          }
+                          bar-card-backgroundbar {
+                            --bar-color: '#000000' !important;
+                              border-radius: 30px;
+                          }
+                          bar-card-currentbar {
+                            border-radius: 30px;
+                          }
+              - type: vertical-stack
+                cards:
+                  - type: markdown
+                    content: '&nbsp;'
+                    theme: LCARS Classic
+                    card_mod:
+                      class: middle-blank
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Upper Deck
+                    theme: LCARS Picard I
+                    entity: light.upstairs_lights
+                    card_mod:
+                      class: button-lozenge-right
+                      style: |
+                        ha-card {
+                          {% if is_state('light.upstairs_lights', 'on') %}
+                            {% set rgb_color = state_attr('light.upstairs_lights', 'rgb_color') %}
+                            background-color: rgba({{ rgb_color[0] }}, {{ rgb_color[1] }}, {{ rgb_color[2] }}, 1);
+                            color: black;  /* or any other logic for text color */
+                          {% else %}
+                            background-color: #444444;
+                            color: white;
+                          {% endif %}
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Lower Deck
+                    theme: LCARS Picard I
+                    entity: light.downstairs_lights
+                    card_mod:
+                      class: button-lozenge-right
+                      style: |
+                        ha-card {
+                          {% if is_state('light.downstairs_lights', 'on') %}
+                            {% set rgb_color = state_attr('light.downstairs_lights', 'rgb_color') %}
+                            background-color: rgba({{ rgb_color[0] }}, {{ rgb_color[1] }}, {{ rgb_color[2] }}, 1);
+                            color: black;  /* or any other logic for text color */
+                          {% else %}
+                            background-color: #444444;
+                            color: white;
+                          {% endif %}
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Ship
+                    theme: LCARS Picard I
+                    entity: light.upstairs_lights
+                    card_mod:
+                      class: button-lozenge-right
+                      style: |
+                        ha-card {
+                          {% if is_state('light.all_lights', 'on') %}
+                            {% set rgb_color = state_attr('light.all_lights', 'rgb_color') %}
+                            background-color: rgba({{ rgb_color[0] }}, {{ rgb_color[1] }}, {{ rgb_color[2] }}, 1);
+                            color: black; 
+                          {% else %}
+                            background-color: #444444;
+                            color: white;
+                          {% endif %}
+                  - type: horizontal-stack
+                    cards:
+                      - type: markdown
+                        content: '&nbsp;'
+                        theme: LCARS Picard I
+                        card_mod:
+                          class: middle-blank
+                      - type: custom:my-slider-v2
+                        title: Upstairs Lights
+                        entity: light.living_room_lights
+                        vertical: true
+                        allowTapping: true
+                        allowSliding: true
+                        styles:
+                          card:
+                            - height: 200px
+                              width: 50px
+                          track:
+                            - background: '#444444'
+                          progress:
+                            - background: |
+                                [[[
+                                  if (entity.state == "on") return "lightyellow";
+                                ]]]
+                          thumb:
+                            - background: orange
+                        card_mod:
+                          class: middle-blank
+                          style: |
+                            :host {
+                              display: flex;
+                              justify-content: center;
+                            }
+                      - type: picture
+                        image: /local/images/starfleet.png
+                        theme: LCARS Picard I
+                        style: null
+                        card_mod:
+                          class: middle-blank
+                          style: |
+                            :host {
+                              padding: 15px;
+
+                            }
+                      - type: markdown
+                        content: '&nbsp;'
+                        theme: LCARS Picard I
+                        card_mod:
+                          class: middle-blank
+          - type: markdown
+            content: Raspberry Pi 4b - Home Assistant - LCARS
+            theme: LCARS Lower Decks I
+            card_mod:
+              class: bar
+    icon: mdi:space-station
+  - title: Home V3
+    theme: Home Assistant
+    path: home
+    type: panel
+    icon: mdi:home
     badges: []
     cards:
       - type: vertical-stack
         cards:
+          - square: false
+            columns: 6
+            type: grid
+            cards:
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: navigate
+                  navigation_path: /lovelace-pi/1
+                icon: mdi:cctv
+                card_mod:
+                  style: |
+                    :host {
+                      --paper-item-icon-color: #9900E6 !important;
+                    }
+                    ha-card {
+                      font-size: 1rem !important;
+                      justify-content: center !important;
+                      border-width: 3px;
+                      border-color: #9900E6;
+                    }
+                    ha-state-icon {
+                      width: 40% !important;
+                      padding: 2px 0 2px 0px;
+                    }
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: navigate
+                  navigation_path: /lovelace-pi/washing-machine
+                icon: mdi:washing-machine
+                card_mod:
+                  style: |
+                    :host {
+                      --paper-item-icon-color: #6699FF !important;
+                    }
+                    ha-card {
+                      font-size: 1rem !important;
+                      justify-content: flex-end !important;
+                      border-width: 3px;
+                      border-color: #6699FF;
+                    }
+                    ha-state-icon {
+                      width: 40% !important;
+                      padding: 2px 0 2px 0px;
+                    }
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: navigate
+                  navigation_path: /lovelace-pi/waterer
+                icon: mdi:sprout
+                hold_action:
+                  action: call-service
+                  service: mqtt.publish
+                  data:
+                    topic: waterer/waterpump
+                    payload: Requested
+                  target: {}
+                card_mod:
+                  style: |
+                    :host {
+                      --paper-item-icon-color: #11AA00 !important;
+                    }
+                    ha-card {
+                      font-size: 1rem !important;
+                      justify-content: center !important;
+                      border-width: 3px;
+                      border-color: #11AA00;
+                    }
+                    ha-state-icon {
+                      width: 40% !important;
+                      padding: 2px 0 2px 0px;
+                    }
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: navigate
+                  navigation_path: /lovelace-pi/5
+                icon: mdi:water-percent
+                hold_action:
+                  action: toggle
+                card_mod:
+                  style: |
+                    :host {
+                      --paper-item-icon-color: yellow !important;
+                    }
+                    ha-card {
+                      font-size: 1rem !important;
+                      justify-content: center !important;
+                      border-width: 3px;
+                      border-color: yellow;
+                    }
+                    ha-state-icon {
+                      width: 40% !important;
+                      padding: 2px 0 2px 0px;
+                    }
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: navigate
+                  navigation_path: /lovelace-pi/6
+                hold_action:
+                  action: call-service
+                  service: script.pet_feeder_feed
+                  data: {}
+                  target: {}
+                icon: mdi:cat
+                card_mod:
+                  style: |
+                    :host {
+                      --paper-item-icon-color: orange !important;
+                    }
+                    ha-card {
+                      font-size: 1rem !important;
+                      justify-content: center !important;
+                      border-width: 3px;
+                      border-color: orange;
+                    }
+                    ha-state-icon {
+                      width: 40% !important;
+                      padding: 2px 0 2px 0px;
+                    }
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: navigate
+                  navigation_path: /lovelace-pi/remotes
+                icon: mdi:remote-tv
+                card_mod:
+                  style: |
+                    :host {
+                      --paper-item-icon-color: #FF4D4D !important;
+                    }
+                    ha-card {
+                      font-size: 1rem !important;
+                      justify-content: center !important;
+                      border-width: 3px;
+                      border-color: #FF4D4D;
+                    }
+                    ha-state-icon {
+                      width: 40% !important;
+                      padding: 2px 0 2px 0px;
+                    }
           - type: horizontal-stack
             cards:
               - type: vertical-stack
                 cards:
                   - type: entities
                     entities: []
-                    title: Kids Room
+                    show_header_toggle: false
+                    title: Buttons
                     card_mod:
                       style: |
                         ha-card {
                           border-radius: 30px;
-                          margin: 6px 6px 0px;
+                          margin: 0px 6px;
                           --ha-card-header-font-size: 20px;
                         }
                         .card-header {
@@ -34,18 +673,16 @@ views:
                         .card-content {
                           padding: 0;
                         }
-                  - square: false
-                    columns: 4
+                  - square: true
+                    columns: 2
                     type: grid
                     cards:
-                      - type: custom:bar-card
-                        entities:
-                          - {}
-                      - type: light
-                        entity: light.lumiman_smart_bulb
-                        name: Main
-                        hold_action:
-                          action: more-info
+                      - show_name: true
+                        show_icon: true
+                        type: button
+                        entity: humidifier.aromatherapy_machine
+                        name: Mist
+                        icon: mdi:air-humidifier
                         card_mod:
                           style: |
                             ha-card {
@@ -55,6 +692,69 @@ views:
                             }
                             #info {
                               padding: 2px 0 5px 0 !important;
+                            }
+                            .mdc-icon-button {
+                              padding: 16px !important;
+                            }
+                            ha-icon-button.more-info {
+                              display: none !important;
+                            }
+                            #humidity {
+                              height: 100% !important;
+                      - show_name: true
+                        show_icon: true
+                        type: button
+                        tap_action:
+                          action: toggle
+                        entity: fan.bedroom_fan
+                        name: Bed Fan
+                        icon: mdi:fan
+                        show_state: false
+                        hold_action:
+                          action: navigate
+                          navigation_path: /lovelace-pi/5
+                        card_mod:
+                          style: |
+                            ha-card {
+                              --name-font-size: 1rem !important;
+                              --mdc-icon-button-size: 30px !important;
+                              border-radius: 30px;
+                            }
+                            #info {
+                              padding: 2px 0px 0px 0px !important;
+                            }
+                            .mdc-icon-button {
+                              padding: 16px !important;
+                            }
+                            ha-icon-button.more-info {
+                              display: none !important;
+                            }
+                      - show_name: true
+                        show_icon: true
+                        type: button
+                        entity: sensor.pet_feeder_feed_status
+                        tap_action:
+                          action: call-service
+                          service: script.pet_feeder_feed
+                          data: {}
+                          target: {}
+                        name: Pet Food
+                        show_state: true
+                        card_mod:
+                          style: |
+                            :host { 
+                              --paper-item-icon-color: {{
+                                '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else
+                                '#FF0000' if states('sensor.pet_feeder_feed_status').split(':')[0] == "Ahead" else
+                                '#0044FF' }};
+                            } 
+                            ha-card {
+                              --name-font-size: 1rem !important;
+                              --mdc-icon-button-size: 30px !important;
+                              border-radius: 30px;
+                            }
+                            #info {
+                              padding: 2px 0px 5px 0px !important;
                             }
                             #controls {
                               padding: 0 16px 16px !important;
@@ -68,23 +768,32 @@ views:
                             ha-icon-button.more-info {
                               display: none !important;
                             }
-                      - type: light
-                        entity: light.kid_strip_light
-                        name: Fairy
-                        hold_action:
-                          action: more-info
+                            state-badge {
+                              margin: 5px 0px 0px 0px;
+                            }
+                      - show_name: true
+                        show_icon: true
+                        type: button
+                        tap_action:
+                          action: toggle
+                        entity: sensor.waterer_moisture
+                        name: Plant
+                        show_state: true
                         card_mod:
                           style: |
+                            :host { 
+                              --paper-item-icon-color: {{ 
+                                '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
+                                '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
+                                '#0000FF' }}; 
+                            }
                             ha-card {
                               --name-font-size: 1rem !important;
                               --mdc-icon-button-size: 30px !important;
                               border-radius: 30px;
                             }
-                            ha-icon-button.more-info {
-                              display: none !important;
-                            }
                             #info {
-                              padding: 2px 0 5px 0 !important;
+                              padding: 2px 0px 5px 0px !important;
                             }
                             #controls {
                               padding: 0 16px 16px !important;
@@ -92,30 +801,14 @@ views:
                             #slider {
                               min-width: 70px !important;
                             }
-                      - show_name: true
-                        show_icon: true
-                        type: button
-                        tap_action:
-                          action: toggle
-                        entity: switch.ewpe_dehumidifier_power
-                        name: Dehumid
-                        icon: mdi:cloud-download
-                        show_state: false
-                        hold_action:
-                          action: navigate
-                          navigation_path: /lovelace-pi/5
-                        card_mod:
-                          style: |
-                            ha-card {
-                              font-size: 1rem !important;
-                              justify-content: flex-end !important;
-                              border-radius: 30px;
+                            .mdc-icon-button {
+                              padding: 16px !important;
                             }
-                            ha-state-icon {
-                              width: 40% !important;
+                            ha-icon-button.more-info {
+                              display: none !important;
                             }
-                            #info {
-                              padding: 2px 0 5px 0 !important;
+                            state-badge {
+                              margin: 5px 0px 0px 0px;
                             }
                   - show_name: false
                     show_icon: true
@@ -161,196 +854,33 @@ views:
                             state-badge {
                               margin: 5px 0px 0px 0px;
                             }
-                    card_mod:
-                      style: |
-                        :host {
-                          --mdc-icon-size: 40px;
-                        }
-                        ha-card {
-                          border-radius: 30px;
-                        }
-                        .entity {
-                          margin-bottom: 5px !important;
-                        }
-                        .entities.no-header {
-                          padding: 0px !important;
-                        }
-                  - type: custom:button-card
-                    card_mod:
-                      style: |
-                        ha-card {
-                          background-color: var(--primary-background-color);
-                          border-color: var(--primary-background-color);
-                          padding: 5px !important;
-                        }
-                  - type: entities
-                    entities: []
-                    title: Kitchen + Dining
-                    show_header_toggle: false
-                    card_mod:
-                      style: |
-                        ha-card {
-                          border-radius: 30px;
-                          margin: 6px 6px 0px;
-                          --ha-card-header-font-size: 20px;
-                        }
-                        .card-header {
-                          padding: 0px 16px 7px 16px;
-                          justify-content: center !important;
-                          line-height: 2;
-                        }
-                        .card-content {
-                          padding: 0;
-                        }
-                  - square: false
-                    columns: 4
-                    type: grid
-                    cards:
-                      - type: light
-                        entity: light.back_door_light
-                        name: Back
-                        icon: mdi:ceiling-light
-                        hold_action:
-                          action: more-info
-                        card_mod:
-                          style: |
-                            ha-card {
-                              --name-font-size: 1rem !important;
-                              --mdc-icon-button-size: 30px !important;
-                              border-radius: 30px;
-                            }
-                            #info {
-                              padding: 2px 0px 0px 0px !important;
-                            }
-                            #controls {
-                              padding: 0 16px 16px !important;
-                            }
-                            #slider {
-                              min-width: 70px !important;
-                            }
-                            .mdc-icon-button {
-                              padding: 16px !important;
-                            }
-                            ha-icon-button.more-info {
-                              display: none !important;
-                            }
-                      - type: light
-                        entity: light.stairs_light
-                        name: Stairs
-                        icon: mdi:ceiling-light
-                        hold_action:
-                          action: more-info
-                        card_mod:
-                          style: |
-                            ha-card {
-                              --name-font-size: 1rem !important;
-                              --mdc-icon-button-size: 30px !important;
-                              border-radius: 30px;
-                            }
-                            #info {
-                              padding: 2px 0px 0px 0px !important;
-                            }
-                              #controls {
-                              padding: 0 16px 16px !important;
-                            }
-                            #slider {
-                              min-width: 70px !important;
-                            }
-                            .mdc-icon-button {
-                              padding: 16px !important;
-                            }
-                            ha-icon-button.more-info {
-                              display: none !important;
-                            }
-                      - type: humidifier
-                        entity: humidifier.aromatherapy_machine
-                        name: Mist
-                        card_mod:
-                          style: |
-                            ha-card {
-                              --name-font-size: 1rem !important;
-                              --mdc-icon-button-size: 30px !important;
-                              border-radius: 30px;
-                            }
-                            #info {
-                              padding: 2px 0px 0px 0px !important;
-                            }
-                            #controls {
-                              padding: 0 16px 16px !important;
-                            }
-                            #slider {
-                              min-width: 70px !important;
-                            }
-                            #humidity {
-                              height: 100% !important;
-                            }
-                            .mdc-icon-button {
-                              padding: 16px !important;
-                            }
-                            ha-icon-button.more-info {
-                              display: none !important;
-                            }
-                      - show_state: false
-                        show_name: false
-                        camera_view: auto
-                        type: picture-entity
-                        name: Porch
-                        camera_image: camera.back_porch
-                        entity: camera.back_porch
-                        card_mod:
-                          style: |
-                            ha-card {
-                              border-radius: 30px;
-                            }
-                            hui-image {
-                              justify-content: center !important;
-                              padding:13px 0 0 0;
-                            }
-                  - show_name: false
-                    show_icon: true
-                    show_state: true
-                    type: glance
-                    entities:
-                      - entity: sensor.dining_motion_detected
+                      - entity: sensor.bedroom_meter_humidity
                         card_mod:
                           style: |
                             :host { 
                               --paper-item-icon-color: {{
-                                '#0044FF' if states('sensor.dining_motion_detected') == "False" else
-                                '#FFC407' }};
+                                '#FF0000' if (states('sensor.bedroom_meter_humidity') | int) < 30 else 
+                                '#0000FF' if (states('sensor.bedroom_meter_humidity') | int) > 60 else 
+                                '#00FF00' }} !important;
                             }
                             state-badge {
                               margin: 5px 0px 0px 0px;
                             }
-                      - entity: sensor.dining_motion_brightness
+                      - entity: sensor.bedroom_meter_temperature
                         card_mod:
                           style: |
                             :host { 
                               --paper-item-icon-color: {{
-                                '#FFC407' if states('sensor.dining_motion_brightness') == "Bright" else
-                                '#0044FF' }};
+                                '#FF0000' if (states('sensor.bedroom_meter_temperature') | float) > 30 else
+                                '#FF8F07' if (states('sensor.bedroom_meter_temperature') | float) > 25 else
+                                '#FFC407' if (states('sensor.bedroom_meter_temperature') | float) > 20 else
+                                '#00FF00' if (states('sensor.bedroom_meter_temperature') | float) > 15 else 
+                                '#0000FF' if (states('sensor.bedroom_meter_temperature') | float) > 3 else
+                                '#FFFFFF'}};
                             }
                             state-badge {
                               margin: 5px 0px 0px 0px;
                             }
-                      - entity: sensor.pet_feeder_feed_status
-                        tap_action:
-                          action: call-service
-                          service: script.pet_feeder_feed
-                          data: {}
-                          target: {}
-                        card_mod:
-                          style: |
-                            :host { 
-                              --paper-item-icon-color: {{
-                                '#00FF00' if states('sensor.pet_feeder_feed_status') == "Feed Due" else
-                                '#FF0000' if states('sensor.pet_feeder_feed_status').split(':')[0] == "Ahead" else
-                                '#0044FF' }};
-                            }
-                            state-badge {
-                              margin: 5px 0px 0px 0px;
-                            }  
-                        icon: mdi:cookie-clock
                     card_mod:
                       style: |
                         :host {
@@ -367,16 +897,18 @@ views:
                         }
               - type: vertical-stack
                 cards:
-                  - type: weather-forecast
+                  - show_current: true
+                    show_forecast: true
+                    type: weather-forecast
                     entity: weather.forecast_home
-                    forecast_type: daily
+                    forecast_type: hourly
                     card_mod:
                       style: |
                         ha-card {
                           border-radius: 50px;
                         }
                         .state {
-                          font-size: 20px !important;
+                          font-size: 14px !important;
                         }
                         .type-weather-forecast {
                           padding: 16px 16px 5px 16px;
@@ -393,7 +925,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          line-height: 90px;
+                          line-height: 100px;
                           font-size: 100px;
                           border-radius: 100px;
                           border-style: solid;
@@ -426,7 +958,7 @@ views:
                             "url(/local/images/summerb.jpg)" if states("sensor.season") == "summer" else
                             "url(/local/images/autumnb.jpg)" if states("sensor.season") == "autumn" else
                             "url(/local/images/winterb.jpg)"}};
-                          line-height: 26px;
+                          line-height: 32px;
                           font-size: 24px;
                           font-weight: 1000;
                           --primary-text-color: black;
@@ -438,6 +970,14 @@ views:
                         }
                         .entities.no-header {
                           padding-top: 12 !important;
+                        }
+                  - type: custom:button-card
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background-color: var(--primary-background-color);
+                          border-color: var(--primary-background-color);
+                          padding: 5px !important;
                         }
                   - type: custom:config-template-card
                     variables:
@@ -511,12 +1051,12 @@ views:
                 cards:
                   - type: entities
                     entities: []
-                    title: Bedroom
+                    title: Lights
                     card_mod:
                       style: |
                         ha-card {
                           border-radius: 30px;
-                          margin: 6px 6px 0px;
+                          margin: 0px 6px;
                           --ha-card-header-font-size: 20px;
                         }
                         .card-header {
@@ -527,24 +1067,21 @@ views:
                         .card-content {
                           padding: 0;
                         }
-                  - square: false
-                    columns: 4
+                  - square: true
+                    columns: 2
                     type: grid
                     cards:
                       - type: light
-                        entity: light.bedroom_light
-                        name: Main
-                        hold_action:
-                          action: more-info
+                        entity: light.all_lights
                         card_mod:
                           style: |
                             ha-card {
                               --name-font-size: 1rem !important;
-                              --mdc-icon-button-size: 30px !important;
+                              --mdc-icon-button-size: 26px !important;
                               border-radius: 30px;
                             }
                             #info {
-                              padding: 2px 0px 5px 0px !important;
+                              padding: 2px 0 5px 0 !important;
                             }
                             #controls {
                               padding: 0 16px 16px !important;
@@ -559,19 +1096,19 @@ views:
                               display: none !important;
                             }
                       - type: light
-                        entity: light.bedroom_strip_light
-                        name: Desk
+                        entity: light.upstairs_lights
+                        name: Upstairs
                         hold_action:
                           action: more-info
                         card_mod:
                           style: |
                             ha-card {
                               --name-font-size: 1rem !important;
-                              --mdc-icon-button-size: 30px !important;
+                              --mdc-icon-button-size: 26px !important;
                               border-radius: 30px;
                             }
                             #info {
-                              padding: 2px 0px 5px 0px !important;
+                              padding: 2px 0 5px 0 !important;
                             }
                             #controls {
                               padding: 0 16px 16px !important;
@@ -585,236 +1122,98 @@ views:
                             ha-icon-button.more-info {
                               display: none !important;
                             }
-                      - show_name: true
-                        show_icon: true
-                        type: button
-                        entity: light.bedroom_fairy_lights
-                        name: Fairy
-                        hold_action:
-                          action: more-info
-                        card_mod:
-                          style: |
-                            ha-card {
-                              font-size: 1rem !important;
-                              justify-content: flex-end !important;
-                              border-radius: 30px;
-                            }
-                            ha-state-icon {
-                              width: 40% !important;
-                            }
-                            #info {
-                              padding: 2px 0 5px 0 !important;
-                            }
-                      - show_name: true
+                      - show_name: false
                         show_icon: true
                         type: button
                         tap_action:
-                          action: toggle
-                        entity: fan.bedroom_fan
-                        name: Fan
-                        icon: ''
-                        show_state: false
+                          action: more-info
+                        entity: binary_sensor.dining_room_light_sensor
+                        show_state: true
                         hold_action:
-                          action: navigate
-                          navigation_path: /lovelace-pi/5
-                        card_mod:
-                          style: |
-                            ha-card {
-                              font-size: 1rem !important;
-                              justify-content: flex-end !important;
-                              border-radius: 30px;
-                            }
-                            ha-state-icon {
-                              width: 40% !important;
-                            }
-                            #info {
-                              padding: 2px 0 5px 0 !important;
-                            }
-                  - show_name: false
-                    show_icon: true
-                    show_state: true
-                    state_color: true
-                    type: glance
-                    entities:
-                      - entity: sensor.kid_room_temp
+                          action: more-info
                         card_mod:
                           style: |
                             :host { 
                               --paper-item-icon-color: {{
-                                '#FF0000' if (states('sensor.ewpe_dehumidifier_temp') | float) > 30 else
-                                '#FF8F07' if (states('sensor.ewpe_dehumidifier_temp') | float) > 25 else
-                                '#FFC407' if (states('sensor.ewpe_dehumidifier_temp') | float) > 20 else
-                                '#00FF00' if (states('sensor.ewpe_dehumidifier_temp') | float) > 15 else 
-                                '#0000FF' if (states('sensor.ewpe_dehumidifier_temp') | float) > 3 else
-                                '#FFFFFF'}};
-                            }
-                            state-badge {
-                              margin: 5px 0px 0px 0px;
-                            }
-                      - entity: sensor.kid_room_humidity
-                        card_mod:
-                          style: |
-                            :host { 
-                              --paper-item-icon-color: {{
-                                '#FF0000' if (states('sensor.kid_room_humidity') | int) < 30 else 
-                                '#0000FF' if (states('sensor.kid_room_humidity') | int) > 60 else 
-                                '#00FF00' }} !important;
-                            }
-                            state-badge {
-                              margin: 5px 0px 0px 0px;
-                            }
-                    card_mod:
-                      style: |
-                        :host {
-                          --mdc-icon-size: 40px;
-                        }
-                        ha-card {
-                          border-radius: 30px;
-                        }
-                        .entity {
-                          margin-bottom: 5px !important;
-                        }
-                        .entities.no-header {
-                          padding: 0px !important;
-                        }
-                  - type: custom:button-card
-                    card_mod:
-                      style: |
-                        ha-card {
-                          background-color: var(--primary-background-color);
-                          border-color: var(--primary-background-color);
-                          padding: 2.5px !important;
-                        }
-                  - type: entities
-                    entities: []
-                    title: Living Room
-                    show_header_toggle: false
-                    card_mod:
-                      style: |
-                        ha-card {
-                          border-radius: 30px;
-                          margin: 6px 6px 0px;
-                          --ha-card-header-font-size: 20px;
-                        }
-                        .card-header {
-                          padding: 0px 16px 7px 16px;
-                          justify-content: center !important;
-                          line-height: 2;
-                        }
-                        .card-content {
-                          padding: 0;
-                        }
-                  - square: false
-                    columns: 4
-                    type: grid
-                    cards:
-                      - type: light
-                        entity: light.living_room_side_light
-                        name: Corner
-                        icon: mdi:lamp
-                        hold_action:
-                          action: more-info
-                        card_mod:
-                          style: |
-                            ha-card {
-                              --name-font-size: 1rem !important;
-                              --mdc-icon-button-size: 30px !important;
-                              border-radius: 30px;
-                            }
-                            #info {
-                              padding: 2px 0px 5px 0px !important;
-                            }
-                            #controls {
-                              padding: 0 16px 16px !important;
-                            }
-                            #slider {
-                              min-width: 70px !important;
-                            }
-                            .mdc-icon-button {
-                              padding: 16px !important;
-                            }
-                            ha-icon-button.more-info {
-                              display: none !important;
-                            }
-                      - type: light
-                        entity: light.desk_lamp
-                        name: Shelf
-                        hold_action:
-                          action: more-info
-                        card_mod:
-                          style: |
-                            ha-card {
-                              --name-font-size: 1rem !important;
-                              --mdc-icon-button-size: 30px !important;
-                              border-radius: 30px;
-                            }
-                            #info {
-                              padding: 2px 0px 5px 0px !important;
-                            }
-                            #controls {
-                              padding: 0 16px 16px !important;
-                            }
-                            #slider {
-                              min-width: 70px !important;
-                            }
-                            .mdc-icon-button {
-                              padding: 16px !important;
-                            }
-                            ha-icon-button.more-info {
-                              display: none !important;
-                            }
-                      - show_name: true
-                        show_icon: true
-                        type: button
-                        entity: light.living_room_book_lamp
-                        icon: mdi:floor-lamp-torchiere
-                        name: Floor
-                        card_mod:
-                          style: |
-                            ha-card {
-                              font-size: 1rem !important;
-                              justify-content: flex-end !important;
-                              border-radius: 30px;
-                            }
-                            ha-state-icon {
-                              width: 40% !important;
-                            }
-                            #info {
-                              padding: 2px 0 5px 0 !important;
-                            }
-                      - show_name: true
-                        show_icon: true
-                        type: button
-                        tap_action:
-                          action: toggle
-                        entity: light.living_room_galaxy_power
-                        name: Galaxy
-                        card_mod:
-                          style: |
-                            ha-card {
-                              font-size: 1rem !important;
-                              justify-content: flex-end !important;
-                              border-radius: 30px;
-                            }
-                            ha-state-icon {
-                              width: 40% !important;
-                            }
-                            #info {
-                              padding: 2px 0 5px 0 !important;
-                            }
-                  - show_name: false
-                    show_icon: true
-                    show_state: true
-                    type: glance
-                    entities:
-                      - entity: binary_sensor.pir_sensor
-                        card_mod:
-                          style: |
-                            :host {
-                              --paper-item-icon-color: {{
-                                '#FFC407' if states('binary_sensor.pir_sensor') == "Detected" else
+                                '#FFC407' if states('sensor.dining_motion_brightness') == "Bright" else
                                 '#0044FF' }};
-                              }
+                            }
+                            ha-card {
+                              --name-font-size: 1rem !important;
+                              --mdc-icon-button-size: 26px !important;
+                              border-radius: 30px;
+                            }
+                            ha-icon-button.more-info {
+                              display: none !important;
+                            }
+                            state-badge {
+                              margin: 5px 0px 0px 0px;
+                            }
+                            #info {
+                              padding: 2px 0 5px 0 !important;
+                            }
+                            #controls {
+                              padding: 0 16px 16px !important;
+                            }
+                            #slider {
+                              min-width: 70px !important;
+                            }
+                            .mdc-icon-button {
+                              padding: 16px !important;
+                            }
+                            .state {
+                              font-size: 14px !important;
+                              color: white !important;
+                            }
+                            ha-state-icon {
+                              width: 60% !important;
+                            }
+                      - type: light
+                        entity: light.downstairs_lights
+                        name: Downstairs
+                        hold_action:
+                          action: more-info
+                        card_mod:
+                          style: |
+                            ha-card {
+                              --name-font-size: 1rem !important;
+                              --mdc-icon-button-size: 26px !important;
+                              border-radius: 30px;
+                            }
+                            #info {
+                              padding: 2px 0 5px 0 !important;
+                            }
+                            #controls {
+                              padding: 0 16px 16px !important;
+                            }
+                            #slider {
+                              min-width: 70px !important;
+                            }
+                            .mdc-icon-button {
+                              padding: 16px !important;
+                            }
+                            ha-icon-button.more-info {
+                              display: none !important;
+                            }
+                  - show_name: false
+                    show_icon: true
+                    show_state: true
+                    type: glance
+                    entities:
+                      - entity: binary_sensor.dining_room_motion
+                        card_mod:
+                          style: |
+                            :host { 
+                              --paper-item-icon-color: {{
+                                '#0044FF' if states('sensor.dining_motion_detected') == "False" else
+                                '#FFC407' }};
+                            }
+                            state-badge {
+                              margin: 5px 0px 0px 0px;
+                            }
+                      - entity: sensor.dining_room_motion_sensor_battery
+                        card_mod:
+                          style: |
                             state-badge {
                               margin: 5px 0px 0px 0px;
                             }
@@ -833,15 +1232,20 @@ views:
                             state-badge {
                               margin: 5px 0px 0px 0px;
                             }
-                      - entity: sensor.waterer_moisture
+                      - entity: sensor.pir_sensor_battery
                         card_mod:
                           style: |
-                            :host { 
-                              --paper-item-icon-color: {{ 
-                                '#00FF00' if is_state('sensor.waterer_status', 'Moist') else 
-                                '#FF0000' if is_state('sensor.waterer_status', 'Dry') else 
-                                '#0000FF' }}; 
+                            state-badge {
+                              margin: 5px 0px 0px 0px;
                             }
+                      - entity: binary_sensor.pir_sensor_motion
+                        card_mod:
+                          style: |
+                            :host {
+                              --paper-item-icon-color: {{
+                                '#FFC407' if states('binary_sensor.pir_sensor') == "Detected" else
+                                '#0044FF' }};
+                              }
                             state-badge {
                               margin: 5px 0px 0px 0px;
                             }
@@ -859,166 +1263,6 @@ views:
                         .entities.no-header {
                           padding: 0px !important;
                         }
-          - square: false
-            columns: 6
-            type: grid
-            cards:
-              - show_name: false
-                show_icon: true
-                type: button
-                tap_action:
-                  action: navigate
-                  navigation_path: /lovelace-pi/1
-                icon: mdi:cctv
-                card_mod:
-                  style: |
-                    :host {
-                      --paper-item-icon-color: #9900E6;
-                    }
-                    ha-card {
-                      font-size: 1rem !important;
-                      justify-content: center !important;
-                      border-radius: 30px;
-                    }
-                    ha-state-icon {
-                      width: 40% !important;
-                    }
-                    #info {
-                      padding: 2px 0 5px 0 !important;
-                    }
-              - show_name: false
-                show_icon: true
-                type: button
-                tap_action:
-                  action: navigate
-                  navigation_path: /lovelace-pi/washing-machine
-                icon: mdi:washing-machine
-                card_mod:
-                  style: |
-                    :host {
-                      --paper-item-icon-color: #6699FF;
-                    }
-                    ha-card {
-                      font-size: 1rem !important;
-                      justify-content: flex-end !important;
-                      border-radius: 30px;
-                    }
-                    ha-state-icon {
-                      width: 40% !important;
-                    }
-                    #info {
-                      padding: 2px 0 5px 0 !important;
-                    }
-              - show_name: false
-                show_icon: true
-                type: button
-                tap_action:
-                  action: navigate
-                  navigation_path: /lovelace-pi/waterer
-                icon: mdi:sprout
-                hold_action:
-                  action: call-service
-                  service: mqtt.publish
-                  data:
-                    topic: waterer/waterpump
-                    payload: Requested
-                  target: {}
-                card_mod: null
-                style: |
-                  :host {
-                    --paper-item-icon-color: #116600;
-                  }
-                  ha-card {
-                    font-size: 1rem !important;
-                    justify-content: center !important;
-                    border-radius: 30px;
-                  }
-                  ha-state-icon {
-                    width: 40% !important;
-                  }
-                  #info {
-                    padding: 2px 0 5px 0 !important;
-                  }
-              - show_name: false
-                show_icon: true
-                type: button
-                tap_action:
-                  action: navigate
-                  navigation_path: /lovelace-pi/5
-                icon: mdi:water-percent
-                hold_action:
-                  action: toggle
-                entity: switch.ewpe_dehumidifier_power
-                card_mod:
-                  style: |
-                    :host {
-                      --paper-item-icon-color: yellow;
-                    }
-                    ha-card {
-                      font-size: 1rem !important;
-                      justify-content: center !important;
-                      border-radius: 30px;
-                    }
-                    ha-state-icon {
-                      width: 40% !important;
-                    }
-                    #info {
-                      padding: 2px 0 5px 0 !important;
-                    }
-              - show_name: false
-                show_icon: true
-                type: button
-                tap_action:
-                  action: navigate
-                  navigation_path: /lovelace-pi/6
-                hold_action:
-                  action: call-service
-                  service: script.pet_feeder_feed
-                  data: {}
-                  target: {}
-                icon: mdi:cat
-                card_mod:
-                  style: |
-                    :host {
-                      --paper-item-icon-color: orange;
-                    }
-                    ha-card {
-                      font-size: 1rem !important;
-                      justify-content: center !important;
-                      border-radius: 30px;
-                    }
-                    ha-state-icon {
-                      width: 40% !important;
-                    }
-                    #info {
-                      padding: 2px 0 5px 0 !important;
-                    }
-              - show_name: false
-                show_icon: true
-                type: button
-                tap_action:
-                  action: navigate
-                  navigation_path: /lovelace-pi/remotes
-                icon: mdi:remote-tv
-                entity: switch.living_room_tv_power
-                hold_action:
-                  action: toggle
-                card_mod:
-                  style: |
-                    :host {
-                      --paper-item-icon-color: #FF4D4D;
-                    }
-                    ha-card {
-                      font-size: 1rem !important;
-                      justify-content: center !important;
-                      border-radius: 30px;
-                    }
-                    ha-state-icon {
-                      width: 40% !important;
-                    }
-                    #info {
-                      padding: 2px 0 5px 0 !important;
-                    }
   - theme: Backend-selected
     icon: mdi:cctv
     type: panel
@@ -1059,13 +1303,14 @@ views:
                 camera_image: camera.back_porch
               - camera_view: live
                 type: picture-glance
-                title: Front Door
+                title: Bedroom
                 image: https://demo.home-assistant.io/stub_config/kitchen.png
                 entities:
-                  - entity: light.living_room_side_light
-                  - entity: light.living_room_book_lamp
-                  - entity: switch.side_lamp_socket_1
-                camera_image: camera.pi_camera
+                  - entity: light.bedroom_lights
+                  - entity: light.bedroom_light
+                  - entity: light.bedroom_strip_light
+                  - entity: light.bedroom_fairy_lights
+                camera_image: camera.bedroom
           - square: false
             columns: 6
             type: grid
@@ -2057,12 +2302,6 @@ views:
                 }
           - type: entities
             entities:
-              - entity: switch.pet_feeder_slow_feed
-                name: Slow Feed
-                icon: mdi:speedometer-slow
-              - entity: switch.pet_feeder_24_hour_clock
-                name: 24 Hour Clock
-                icon: mdi:hours-24
               - entity: input_number.pet_feeder_first_feed
                 name: First Feed
                 icon: mdi:calendar
@@ -2077,6 +2316,9 @@ views:
               - entity: sensor.pet_feeder_feeds_due
                 name: Feeds Due
                 icon: mdi:bowl-mix-outline
+              - entity: sensor.pet_feeder_last_feed
+                name: Time of Last Feed
+                icon: mdi:bowl-outline
               - entity: sensor.pet_feeder_feed_status
                 name: Feed Status
                 icon: mdi:cookie-clock
@@ -2327,17 +2569,17 @@ views:
                     type: button
                     tap_action:
                       action: toggle
-                    entity: switch.living_room_tv_power
+                    entity: switch.living_room_tv
+                    icon: mdi:power
+                    hold_action:
+                      action: none
+                    icon_height: 40px
                     card_mod:
                       style: |
                         :host {
                             --paper-item-icon-active-color: red;
                             --paper-item-icon-color: red;
                           }
-                    icon: mdi:power
-                    hold_action:
-                      action: none
-                    icon_height: 40px
                   - show_name: false
                     show_icon: true
                     type: button
@@ -2566,8 +2808,159 @@ views:
                 #info {
                   padding: 2px 0 5px 0 !important;
                 }
-      - type: custom:firemote-card
-        entity: media_player.fire_tv_192_168_1_134
-        device_type: fire_stick_4k
-        compatibility_mode: default
-        scale: '84'
+      - type: vertical-stack
+        cards:
+          - type: custom:mini-media-player
+            entity: media_player.27_smart_monitor_m5
+            name: Bedroom TV
+            card_mod:
+              style: |
+                :host {
+                  --mmp-border-radius: 30px !important;
+                }
+                ha-card {
+                  border-radius: 30px;
+                  margin: 0px 6px;
+                  --ha-card-header-font-size: 20px;
+                }
+          - type: custom:mushroom-media-player-card
+            entity: media_player.27_smart_monitor_m5_2
+            fill_container: false
+            use_media_info: true
+            media_controls: []
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 30px;
+                  margin: 0px 6px;
+                  --ha-card-header-font-size: 20px;
+                }
+  - icon: mdi:walk
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: entities
+            entities: []
+            title: Walk Recorder
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 30px;
+                  margin: 6px 6px 0px;
+                  --ha-card-header-font-size: 40px;
+                }
+                .card-header {
+                  padding: 0px 16px 7px 16px;
+                  justify-content: center !important;
+                  line-height: 2;
+                }
+                .card-content {
+                  padding: 0;
+                }
+          - show_name: true
+            show_icon: false
+            show_state: true
+            type: glance
+            entities:
+              - entity: sensor.walk_total_money_string
+                name: Total Money
+            card_mod:
+              style: |
+                :host { 
+                  font-size: 30px;
+                  line-height: 30px;
+                }
+                ha-card {
+                  border-radius: 30px;
+                }
+          - square: false
+            type: grid
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: call-service
+                  service: script.walk_start
+                  target: {}
+                entity: input_button.walk_start_button
+                icon: mdi:play
+                name: Start
+                card_mod:
+                  style: |
+                    :host { 
+                      --paper-item-icon-color: {{ 
+                        '#03fc1c' if is_state('input_boolean.walk_active','on') else
+                        '#FFFFFF'}}; 
+                    }
+                    ha-card {
+                      border-radius: 30px;
+                    }
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: call-service
+                  service: script.walk_end
+                  target: {}
+                entity: input_button.walk_end_button
+                icon: mdi:stop
+                name: End
+                card_mod:
+                  style: |
+                    :host { 
+                      --paper-item-icon-color: {{ 
+                        '#fc0303' if is_state('input_boolean.walk_active','on') else
+                        '#000000'}}; 
+                    }
+                    ha-card {
+                      border-radius: 30px;
+                    }
+            columns: 2
+          - square: false
+            type: grid
+            cards:
+              - show_name: true
+                show_icon: false
+                show_state: true
+                type: glance
+                entities:
+                  - entity: input_number.walk_number
+                    name: Number
+              - show_name: true
+                show_icon: false
+                show_state: true
+                type: glance
+                entities:
+                  - entity: input_datetime.walk_date
+                    name: Date
+              - show_name: true
+                show_icon: false
+                show_state: true
+                type: glance
+                entities:
+                  - entity: input_datetime.walk_start
+                    name: Start
+              - show_name: true
+                show_icon: false
+                show_state: true
+                type: glance
+                entities:
+                  - entity: input_datetime.walk_end
+                    name: Finish
+              - show_name: true
+                show_icon: false
+                show_state: true
+                type: glance
+                entities:
+                  - entity: sensor.walk_duration
+                    name: Duration
+              - show_name: true
+                show_icon: false
+                show_state: true
+                type: glance
+                entities:
+                  - entity: sensor.walk_money_string
+                    name: Money
+            columns: 6
+    type: panel
